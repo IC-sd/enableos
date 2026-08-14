@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111c2b" />
+    <meta name="description" content="让原始要求、澄清、行动、证据、实验与交付沿着同一条工作线生长。" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>EnableOS · AI 赋能工作底稿</title>
+    <script>
+      if (window.location.protocol === 'file:') {
+        document.documentElement.dataset.fileEntry = 'true';
+        window.addEventListener('DOMContentLoaded', function () {
+          var appUrl = 'http://127.0.0.1:4173/';
+          window.setTimeout(function () { window.location.replace(appUrl); }, 120);
+        });
+      }
+    </script>
+    <style>
+      .file-entry { display: none; }
+      html[data-file-entry="true"] { color: #162233; background: #eeeae0; font-family: "Microsoft YaHei UI", sans-serif; }
+      html[data-file-entry="true"] .file-entry { min-height: 100vh; padding: 32px; display: grid; place-items: center; box-sizing: border-box; }
+      .file-entry article { width: min(560px, 100%); padding: 32px; border: 1px solid #9f9a8e; background: #fbfaf5; box-shadow: 7px 8px 0 rgba(22,34,51,.1); }
+      .file-entry small { color: #2457d6; font: 700 10px/1 Consolas, monospace; letter-spacing: .12em; }
+      .file-entry h1 { margin: 14px 0 10px; font: 700 30px/1.25 "STZhongsong", "SimSun", serif; }
+      .file-entry p { margin: 0 0 18px; color: #62655f; font-size: 13px; line-height: 1.8; }
+      .file-entry a { min-height: 40px; padding: 0 14px; display: inline-flex; align-items: center; color: white; background: #2457d6; text-decoration: none; font-size: 12px; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <main class="file-entry">
+        <article>
+          <small>ENABLEOS / BROWSER ENTRY</small>
+          <h1>正在转到正确的网页地址</h1>
+          <p id="file-entry-status">EnableOS 需要通过本机网页服务运行，正在连接 127.0.0.1:4173……</p>
+          <a href="http://127.0.0.1:4173/">打开 EnableOS</a>
+        </article>
+      </main>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

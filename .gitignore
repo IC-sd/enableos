@@ -1,0 +1,9 @@
+node_modules/
+.pnpm-store/
+dist/
+.vite/
+*.log
+*.tmp
+server/*.pid
+server/*.token
+.DS_Store

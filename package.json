@@ -1,0 +1,41 @@
+{
+  "name": "enableos-web",
+  "version": "3.2.0",
+  "description": "浏览器优先、本地优先的 AI 赋能工作闭环",
+  "author": "EnableOS",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k \"node server/index.mjs --dev\" \"vite --host 127.0.0.1\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "pnpm typecheck && pnpm test && vite build",
+    "serve": "node server/index.mjs",
+    "stop": "node scripts/stop.mjs",
+    "start": "pnpm build && pnpm serve",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "dexie": "^4.0.11",
+    "fflate": "^0.8.3",
+    "lucide-react": "^0.468.0",
+    "pdfjs-dist": "^4.10.38",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "read-excel-file": "^9.3.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "axe-core": "^4.13.0",
+    "concurrently": "^9.1.2",
+    "fake-indexeddb": "^6.2.5",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6",
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^2.1.8"
+  }
+}
