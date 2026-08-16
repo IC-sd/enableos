@@ -28,6 +28,7 @@ await page.getByRole('heading', { name: '设置' }).waitFor();
 await page.getByRole('heading', { name: '入职边界核对' }).waitFor();
 await page.getByText('未确认前，系统不会把工作资料发送给外部模型。').waitFor();
 await page.getByRole('heading', { name: '数据、备份与审计' }).waitFor();
+await page.getByText('Git 只迁移代码，不迁移浏览器数据。首次正式使用前请导出一份加密备份。').waitFor();
 await page.getByRole('button', { name: '导出审计记录' }).waitFor();
 await page.getByRole('button', { name: '验证审计文件' }).waitFor();
 await page.getByRole('button', { name: '导出加密备份' }).click();

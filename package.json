@@ -1,16 +1,22 @@
 {
   "name": "enableos-web",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "浏览器优先、本地优先的 AI 赋能工作闭环",
   "author": "EnableOS",
   "license": "UNLICENSED",
   "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=20.11.0"
+  },
   "scripts": {
     "dev": "concurrently -k \"node server/index.mjs --dev\" \"vite --host 127.0.0.1\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:browser": "node scripts/browser-smoke.mjs",
     "build": "pnpm typecheck && pnpm test && vite build",
+    "health": "node scripts/doctor.mjs",
     "serve": "node server/index.mjs",
     "stop": "node scripts/stop.mjs",
     "start": "pnpm build && pnpm serve",

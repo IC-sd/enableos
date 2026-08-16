@@ -38,6 +38,7 @@ export interface AppSettings {
   reportCadence: string;
   mentorExpectation: string;
   policyConfirmedAt: string;
+  lastBackupAt: string;
 }
 
 export interface Project {

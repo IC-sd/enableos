@@ -160,5 +160,5 @@ export const desktop: DesktopBridge = {
     minimize: async () => undefined, toggleMaximize: async () => false, close: async () => undefined,
     isMaximized: async () => false, onQuickCapture: () => () => undefined,
   },
-  app: { getInfo: async () => ({ version: '3.2.0', platform: 'Web · PWA', dataPath: '当前浏览器的 IndexedDB（enableos-workspace）' }) },
+  app: { getInfo: async () => ({ version: '3.3.0', platform: 'Web · PWA', dataPath: '当前浏览器的 IndexedDB（enableos-workspace）' }) },
 };

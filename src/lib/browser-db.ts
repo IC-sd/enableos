@@ -105,6 +105,7 @@ export function createDemoDatabase(): AppDatabase {
       theme: 'light', aiMode: 'local', apiProtocol: 'responses', apiEndpoint: 'https://api.openai.com/v1', apiModel: '',
       embeddingModel: '', retrievalMode: 'lexical', hasApiKey: false, compactMode: false,
       externalAiPolicy: 'unknown', externalEvidenceScope: 'public-only', approvedTools: '', dataHandlingNotes: '', reportCadence: '', mentorExpectation: '', policyConfirmedAt: '',
+      lastBackupAt: '',
     },
     projects: [{
       id: projectId,
@@ -140,10 +141,12 @@ export function normalizeDatabase(value: Partial<AppDatabase> | null | undefined
   const fallback = createDemoDatabase();
   const projects = Array.isArray(value?.projects) ? value.projects : [];
   const defaultProjectId = projects.length === 1 ? projects[0].id : null;
+  const rawSettings = { ...fallback.settings, ...(value?.settings ?? {}) };
+  const lastBackupAt = String(rawSettings.lastBackupAt || '');
   return {
     version: 5,
     profile: { ...fallback.profile, ...(value?.profile ?? {}) },
-    settings: { ...fallback.settings, ...(value?.settings ?? {}) },
+    settings: { ...rawSettings, lastBackupAt: lastBackupAt && !Number.isNaN(Date.parse(lastBackupAt)) ? lastBackupAt : '' },
     projects: projects.map((item) => ({ ...item, deletedAt: item.deletedAt ?? '' })),
     tasks: (Array.isArray(value?.tasks) ? value.tasks : []).map((item) => {
       const clarificationQuestions = Array.isArray(item.clarificationQuestions) ? item.clarificationQuestions : [];

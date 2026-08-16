@@ -1,5 +1,7 @@
 # EnableOS Web
 
+[![Validate](https://github.com/IC-sd/enableos/actions/workflows/ci.yml/badge.svg)](https://github.com/IC-sd/enableos/actions/workflows/ci.yml)
+
 EnableOS 是一个浏览器优先、本地优先的 AI 赋能工作底稿。它不预设你入职后一定会做知识库、Agent 或自动化，而是让任何工作沿着一条连续路径推进：
 
 > 收到要求 → 澄清目标 → 组织证据 → 验证方案 → 交付与复盘
@@ -27,7 +29,7 @@ EnableOS 是一个浏览器优先、本地优先的 AI 赋能工作底稿。它�
 
 ## 日常打开
 
-首次准备：
+首次准备可以直接双击 `首次安装 EnableOS.cmd`。它会使用锁定的 pnpm 版本安装依赖、运行类型检查和测试，并生成生产版本。也可以手动执行：
 
 ```powershell
 pnpm install
@@ -48,6 +50,23 @@ http://127.0.0.1:4173
 pnpm serve
 ```
 
+遇到“缺少构建”“端口占用”或新电脑环境不确定时运行：
+
+```powershell
+pnpm run health
+```
+
+## 换电脑与数据迁移
+
+GitHub 仓库只保存程序代码，不会包含浏览器 IndexedDB 中的任务、资料、实验和交付。完整迁移需要同时移动代码和加密备份：
+
+1. 在旧电脑进入“设置 → 数据、备份与审计”，导出加密备份并妥善保存密码。
+2. 在新电脑克隆本仓库，并安装 Node.js 20 或更高版本。
+3. 双击 `首次安装 EnableOS.cmd`，完成后再双击 `启动 EnableOS.cmd`。
+4. 在新电脑的设置页导入 `.enableos` 备份，确认任务和资料数量后再继续工作。
+
+设置页会记录最近一次成功备份时间；超过 14 天或从未备份时会提醒。换电脑、浏览器重装和重要交付前都建议重新导出。
+
 ## 开发与验证
 
 ```powershell
@@ -55,7 +74,10 @@ pnpm dev
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm run health
 ```
+
+浏览器烟雾测试还需要提供 Playwright 包目录，例如在 Codex 工作区中设置 `PLAYWRIGHT_PATH` 后运行 `pnpm test:browser`；日常使用无需安装 Playwright。
 
 - 开发页面：`http://127.0.0.1:5173`
 - 开发 AI 网关：`http://127.0.0.1:8787`
@@ -85,6 +107,9 @@ server/              同源本机 AI 网关和静态网页服务
 shared/              数据模型与接口
 scripts/             浏览器自动验收
 docs/                架构说明和验收截图
+.github/workflows/   GitHub 自动类型检查、测试、构建与运行布局验证
 ```
+
+`private: true` 仅用于阻止误发布到 npm；仓库本身仍是公开的。当前未附开源许可证，代码公开可见不等于授予复制、分发或商用许可。
 
 完整的产品边界、研究依据和前后端设计见 [产品与架构说明](docs/PRODUCT-ARCHITECTURE.md)。

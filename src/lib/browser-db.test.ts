@@ -54,6 +54,8 @@ describe('normalized browser database', () => {
     expect(normalized.knowledge[0].taskId).toBeNull();
     expect(normalized.tasks[0].deletedAt).toBe('');
     expect(normalized.knowledge[0]).toMatchObject({ sourceFingerprint: '', sourceSize: 0, sourceModifiedAt: '', sourceMime: '', deletedAt: '' });
+    expect(normalized.settings.lastBackupAt).toBe('');
+    expect(normalizeDatabase({ settings: { lastBackupAt: 'not-a-date' } as never }).settings.lastBackupAt).toBe('');
     expect(normalized.revisions).toEqual([]);
     expect(normalized.version).toBe(5);
   });

@@ -41,42 +41,46 @@ function openBrowser() {
   }
 }
 
-if (await isReady()) {
-  process.stdout.write(`EnableOS is already running: ${url}\n`);
-  openBrowser();
-  process.exit(0);
-}
-
-for (const path of [stdoutPath, stderrPath]) {
-  try { if (statSync(path).size > 2_000_000) writeFileSync(path, '', 'utf8'); } catch { /* first launch */ }
-}
-const shutdownToken = randomBytes(32).toString('hex');
-writeFileSync(tokenPath, shutdownToken, { encoding: 'utf8', mode: 0o600 });
-const stdout = openSync(stdoutPath, 'a');
-const stderr = openSync(stderrPath, 'a');
-const child = spawn(process.execPath, [join(root, 'server', 'index.mjs')], {
-  cwd: root,
-  detached: true,
-  windowsHide: true,
-  stdio: ['ignore', stdout, stderr],
-  env: { ...process.env, ENABLEOS_NO_OPEN: '1', ENABLEOS_SHUTDOWN_TOKEN: shutdownToken },
-});
-child.once('error', (error) => process.stderr.write(`Could not start EnableOS: ${error.message}\n`));
-child.unref();
-closeSync(stdout);
-closeSync(stderr);
-writeFileSync(pidPath, String(child.pid), 'utf8');
-
-for (let attempt = 0; attempt < 50; attempt += 1) {
+async function main() {
   if (await isReady()) {
-    process.stdout.write(`EnableOS is ready: ${url}\n`);
+    process.stdout.write(`EnableOS is already running: ${url}\n`);
     openBrowser();
-    process.exit(0);
+    return;
   }
-  await new Promise((resolve) => setTimeout(resolve, 200));
+
+  for (const path of [stdoutPath, stderrPath]) {
+    try { if (statSync(path).size > 2_000_000) writeFileSync(path, '', 'utf8'); } catch { /* first launch */ }
+  }
+  const shutdownToken = randomBytes(32).toString('hex');
+  writeFileSync(tokenPath, shutdownToken, { encoding: 'utf8', mode: 0o600 });
+  const stdout = openSync(stdoutPath, 'a');
+  const stderr = openSync(stderrPath, 'a');
+  const child = spawn(process.execPath, [join(root, 'server', 'index.mjs')], {
+    cwd: root,
+    detached: true,
+    windowsHide: true,
+    stdio: ['ignore', stdout, stderr],
+    env: { ...process.env, ENABLEOS_NO_OPEN: '1', ENABLEOS_SHUTDOWN_TOKEN: shutdownToken },
+  });
+  child.once('error', (error) => process.stderr.write(`Could not start EnableOS: ${error.message}\n`));
+  child.unref();
+  closeSync(stdout);
+  closeSync(stderr);
+  writeFileSync(pidPath, String(child.pid), 'utf8');
+
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (await isReady()) {
+      process.stdout.write(`EnableOS is ready: ${url}\n`);
+      openBrowser();
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  let details = '';
+  try { details = readFileSync(stderrPath, 'utf8').slice(-3_000); } catch { /* log may not exist */ }
+  process.stderr.write(`EnableOS did not become ready.\n${details || `Check ${stderrPath}`}\n`);
+  process.exitCode = 1;
 }
 
-let details = '';
-try { details = readFileSync(stderrPath, 'utf8').slice(-3_000); } catch { /* log may not exist */ }
-process.stderr.write(`EnableOS did not become ready.\n${details || `Check ${stderrPath}`}\n`);
-process.exit(1);
+await main();
