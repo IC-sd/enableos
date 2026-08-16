@@ -23,7 +23,7 @@ export function inspectWorkspace(database: AppDatabase): WorkspaceHealthIssue[] 
 
   const orphanTaskLinks = [...database.knowledge, ...database.scenarios, ...database.reports]
     .filter((item) => item.taskId && !taskIds.has(item.taskId)).length;
-  if (orphanTaskLinks) issues.push({ code: 'orphan-task-links', severity: 'error', count: orphanTaskLinks, title: '存在失效的工作线关联', detail: '关联任务已不存在；资料本身仍然保留，可安全解除这条失效关联。', repairable: true });
+  if (orphanTaskLinks) issues.push({ code: 'orphan-task-links', severity: 'error', count: orphanTaskLinks, title: '存在失效的任务关联', detail: '关联任务已不存在；资料本身仍然保留，可安全解除这条失效关联。', repairable: true });
 
   const collections = [database.projects, database.tasks, database.knowledge, database.scenarios, database.activities, database.reports, database.revisions];
   const duplicates = collections.reduce((sum, values) => sum + duplicateCount(values.map((item) => item.id)), 0);

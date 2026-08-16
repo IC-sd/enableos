@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 import type { Task } from '../../shared/models';
 import { useAppStore } from '../context/AppStore';
 import { desktop } from '../lib/bridge';
-import { activity, buildCompanyContext, randomUUID } from '../lib/utils';
+import { activity, buildWorkspaceContext, randomUUID } from '../lib/utils';
 import { Modal } from './Modal';
 
 export function QuickCapture({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (taskId: string) => void }) {
   const { database, mutate, notify } = useAppStore();
   const [rawInput, setRawInput] = useState('');
-  const [source, setSource] = useState('领导/导师');
+  const [source, setSource] = useState('他人请求');
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -21,7 +21,7 @@ export function QuickCapture({ open, onClose, onCreated }: { open: boolean; onCl
     if (!database || !rawInput.trim() || busy) return;
     setBusy(true);
     try {
-      const response = await desktop.ai.analyzeTask(rawInput, buildCompanyContext(database, rawInput));
+      const response = await desktop.ai.analyzeTask(rawInput, buildWorkspaceContext(database, rawInput));
       const now = new Date().toISOString();
       const result = response.data;
       const task: Task = {
@@ -52,20 +52,20 @@ export function QuickCapture({ open, onClose, onCreated }: { open: boolean; onCl
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="快速收任务" description="保留对方原话，再把模糊要求整理成可以执行的任务。" size="large">
+    <Modal open={open} onClose={onClose} title="快速记录" description="保留原始输入，再把模糊事项整理成可以执行的任务。" size="large">
       <div className="capture-modal">
         <div className="capture-source-row">
           <label>来源</label>
-          {['领导/导师', '业务同事', '会议记录', '个人想法'].map((item) => (
+          {['他人请求', '会议/沟通', '个人计划', '临时想法'].map((item) => (
             <button key={item} className={source === item ? 'selected' : ''} onClick={() => setSource(item)}>{item}</button>
           ))}
         </div>
         <div className="capture-editor">
-          <textarea ref={inputRef} value={rawInput} onChange={(event) => setRawInput(event.target.value)} placeholder="粘贴对方的原话、会议记录或你还没想清楚的任务……" />
-          <div className="capture-hint"><Sparkles size={15} />系统会提取目标、待确认问题、执行步骤和建议交付物</div>
+          <textarea ref={inputRef} value={rawInput} onChange={(event) => setRawInput(event.target.value)} placeholder="粘贴原话、会议记录，或写下一个还没想清楚的事项……" />
+          <div className="capture-hint"><Sparkles size={15} />系统会提取目标、待确认问题、执行步骤和预期结果</div>
         </div>
         <div className="capture-footer">
-          <div className="privacy-hint"><Bot size={17} /><span>{database?.settings.aiMode === 'api' ? '将使用你配置的模型；请遵守公司资料权限。' : '当前使用本地方法，不会上传内容。'}</span></div>
+          <div className="privacy-hint"><Bot size={17} /><span>{database?.settings.aiMode === 'api' ? '将使用你配置的模型；请遵守当前资料与隐私规则。' : '当前使用本地方法，不会上传内容。'}</span></div>
           <button className="primary-button" disabled={!rawInput.trim() || busy} onClick={() => void analyze()}>
             {busy ? <LoaderCircle className="spin" size={17} /> : <ArrowRight size={17} />}{busy ? '正在梳理' : '分析并创建任务'}
           </button>

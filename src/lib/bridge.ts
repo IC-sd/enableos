@@ -21,7 +21,7 @@ async function gateway(path: string, init?: RequestInit): Promise<GatewayRespons
 }
 
 async function callModel(database: AppDatabase, system: string, user: string): Promise<string> {
-  if (database.settings.externalAiPolicy !== 'approved-with-rules') throw new Error('公司外部 AI 使用边界尚未确认；资料未发送');
+  if (database.settings.externalAiPolicy !== 'approved-with-rules') throw new Error('外部 AI 使用边界尚未确认；资料未发送');
   assertSafeForExternal(`${system}\n${user}`);
   const body = await gateway('/api/ai', {
     method: 'POST',
@@ -57,13 +57,13 @@ export const desktop: DesktopBridge = {
   ai: {
     analyzeTask: async (rawInput, context) => withModel<TaskAnalysis>(
       localTaskAnalysis(rawInput),
-      '你是企业AI赋能工作的高级项目教练。把模糊要求整理为可执行任务。严格返回有效JSON，不使用Markdown。',
-      `公司上下文：${context}\n原始要求：${rawInput}\nJSON结构：{"title":"","objective":"","summary":"","priority":"low|medium|high","clarificationQuestions":[],"steps":[],"deliverables":[],"risks":[],"suggestedDueDate":"YYYY-MM-DD"}`,
+      '你是严谨的工作整理助手。把模糊输入转换为边界清楚、可以验证且不过度承诺的任务。严格返回有效JSON，不使用Markdown。',
+      `工作上下文：${context}\n原始输入：${rawInput}\nJSON结构：{"title":"","objective":"","summary":"","priority":"low|medium|high","clarificationQuestions":[],"steps":[],"deliverables":[],"risks":[],"suggestedDueDate":"YYYY-MM-DD"}`,
     ),
     analyzeScenario: async (rawInput, context) => withModel<ScenarioAnalysis>(
       localScenarioAnalysis(rawInput),
-      '你是企业AI机会验证负责人。判断真实痛点、基线、AI边界、最小实验和成功指标。避免为了使用AI而使用AI。严格返回有效JSON。',
-      `公司上下文：${context}\n业务描述：${rawInput}\nJSON结构：{"title":"","pain":"","currentProcess":"","aiOpportunity":"","inputs":"","outputs":"","prototypePlan":[],"successMetrics":[],"risk":"low|medium|high","valueScore":0,"feasibilityScore":0,"dataReadiness":0}`,
+      '你是严谨的实验设计助手。识别真实问题、当前基线、候选改变、最小实验和成功指标；不要预设必须使用AI或开发软件。严格返回有效JSON。',
+      `工作上下文：${context}\n问题或想法：${rawInput}\nJSON结构：{"title":"","pain":"","currentProcess":"","aiOpportunity":"","inputs":"","outputs":"","prototypePlan":[],"successMetrics":[],"risk":"low|medium|high","valueScore":0,"feasibilityScore":0,"dataReadiness":0}`,
     ),
     generateReport: async (database, rangeStart, rangeEnd) => {
       const fallback = localReport(database, rangeStart, rangeEnd);
@@ -80,7 +80,7 @@ export const desktop: DesktopBridge = {
       const fallback = `当前资料不足以直接下结论。建议先明确“${instruction.slice(0, 100)}”涉及的事实来源、适用范围和待确认项，再形成可验证答案。`;
       if (database.settings.aiMode !== 'api' || !database.settings.apiModel.trim()) return { data: fallback, mode: 'local', notice: '当前为本地模式。' };
       try {
-        const content = await callModel(database, '你是企业工作资料助手。只能依据给定上下文回答；区分事实、推断和建议；每个事实结论必须引用对应证据编号，例如[E1]；不得编造不存在的来源；缺少信息时明确说明。', `上下文：\n${context}\n\n问题：${instruction}`);
+        const content = await callModel(database, '你是严谨的资料助手。只能依据给定上下文回答；区分事实、推断和建议；每个事实结论必须引用对应证据编号，例如[E1]；不得编造不存在的来源；缺少信息时明确说明。', `上下文：\n${context}\n\n问题：${instruction}`);
         return { data: content, mode: 'api', notice: '已通过本机安全网关调用模型。' };
       } catch (error) {
         return { data: fallback, mode: 'local', notice: `模型不可用，已回退本地建议：${error instanceof Error ? error.message : '未知错误'}` };
@@ -89,7 +89,7 @@ export const desktop: DesktopBridge = {
     embed: async (inputs) => {
       const database = await loadDatabase();
       if (database.settings.aiMode !== 'api' || !database.settings.embeddingModel.trim()) throw new Error('请先开启模型增强并填写向量模型');
-      if (database.settings.externalAiPolicy !== 'approved-with-rules') throw new Error('公司外部 AI 使用边界尚未确认');
+      if (database.settings.externalAiPolicy !== 'approved-with-rules') throw new Error('外部 AI 使用边界尚未确认');
       assertSafeForExternal(inputs.join('\n'));
       const body = await gateway('/api/embeddings', {
         method: 'POST',
@@ -160,5 +160,5 @@ export const desktop: DesktopBridge = {
     minimize: async () => undefined, toggleMaximize: async () => false, close: async () => undefined,
     isMaximized: async () => false, onQuickCapture: () => () => undefined,
   },
-  app: { getInfo: async () => ({ version: '3.3.0', platform: 'Web · PWA', dataPath: '当前浏览器的 IndexedDB（enableos-workspace）' }) },
+  app: { getInfo: async () => ({ version: '3.4.0', platform: 'Web · PWA', dataPath: '当前浏览器的 IndexedDB（enableos-workspace）' }) },
 };

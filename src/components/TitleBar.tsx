@@ -14,7 +14,7 @@ export function TitleBar({ onSearch }: { onSearch: () => void }) {
       <div className="titlebar-drag" aria-label="EnableOS">
         <strong>EnableOS</strong>
         <span className="masthead-slash">/</span>
-        <span className="titlebar-subtitle">AI 赋能工作底稿</span>
+        <span className="titlebar-subtitle">本地优先的工作空间</span>
       </div>
       <div className="browser-status">
         <button className="titlebar-search" onClick={onSearch}><Search size={14} /><span>搜索所有记录</span><kbd>Ctrl /</kbd></button>

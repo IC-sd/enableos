@@ -18,15 +18,15 @@ page.on('pageerror', (error) => errors.push(error.message));
 page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
 
 await page.goto('http://127.0.0.1:4173', { waitUntil: 'domcontentloaded' });
-await page.getByRole('heading', { name: '从一条要求，推进到可交付结果。' }).waitFor();
-await page.getByText('按“原始要求 → 澄清 → 行动 → 证据 → 交付”推进，每一步都能修改、复核和追溯。').waitFor();
+await page.getByRole('heading', { name: '从一个输入，推进到可验证结果。' }).waitFor();
+await page.getByText('按“原始输入 → 澄清 → 行动 → 依据 → 输出”推进，每一步都能修改、复核和追溯。').waitFor();
 await page.waitForTimeout(800);
 await page.screenshot({ path: 'docs/enableos-web-preview.png', fullPage: true });
 
 await page.getByRole('button', { name: /设置/ }).click();
 await page.getByRole('heading', { name: '设置' }).waitFor();
-await page.getByRole('heading', { name: '入职边界核对' }).waitFor();
-await page.getByText('未确认前，系统不会把工作资料发送给外部模型。').waitFor();
+await page.getByRole('heading', { name: '数据与 AI 使用边界' }).waitFor();
+await page.getByText('你决定什么可以离开浏览器；未明确允许前，系统不会把资料发送给外部模型。').waitFor();
 await page.getByRole('heading', { name: '数据、备份与审计' }).waitFor();
 await page.getByText('Git 只迁移代码，不迁移浏览器数据。首次正式使用前请导出一份加密备份。').waitFor();
 await page.getByRole('button', { name: '导出审计记录' }).waitFor();
@@ -43,8 +43,8 @@ await page.getByPlaceholder('例如 text-embedding-3-small').waitFor();
 await page.getByText(/最近诊断/).waitFor();
 await page.screenshot({ path: 'docs/enableos-settings.png', fullPage: true });
 
-await page.getByRole('button', { name: '交付' }).click();
-await page.getByRole('heading', { name: '交付中心' }).waitFor();
+await page.getByRole('button', { name: '汇报' }).click();
+await page.getByRole('heading', { name: '输出与复盘' }).waitFor();
 const reportPanel = await page.locator('.report-builder').boundingBox();
 const endDate = await page.locator('.date-range input[type="date"]').nth(1).boundingBox();
 if (!reportPanel || !endDate || endDate.x + endDate.width > reportPanel.x + reportPanel.width + 1) throw new Error('End date input overflows the report builder panel');
@@ -52,13 +52,13 @@ await page.getByRole('button', { name: '生成本期汇报' }).click();
 await page.locator('.report-textarea').waitFor();
 await page.locator('.report-editor .citation-status.valid').waitFor();
 await page.screenshot({ path: 'docs/enableos-report-center.png', fullPage: true });
-await page.getByRole('button', { name: '工作线', exact: true }).click();
-await page.getByRole('heading', { name: '从一条要求，推进到可交付结果。' }).waitFor();
+await page.getByRole('button', { name: '工作台', exact: true }).click();
+await page.getByRole('heading', { name: '从一个输入，推进到可验证结果。' }).waitFor();
 
-await page.getByRole('button', { name: '收下一条要求' }).click();
-await page.getByPlaceholder('粘贴对方的原话、会议记录或你还没想清楚的任务……').fill('明天前整理设备故障资料，并给导师一份可验证的AI辅助方案');
+await page.locator('.rail-capture').click();
+await page.getByPlaceholder('粘贴原话、会议记录，或写下一个还没想清楚的事项……').fill('明天前整理一份设备故障资料，并形成可复核的问题清单');
 await page.getByRole('button', { name: '分析并创建任务' }).click();
-await page.getByRole('heading', { name: '从一条要求，推进到可交付结果。' }).waitFor();
+await page.getByRole('heading', { name: '从一个输入，推进到可验证结果。' }).waitFor();
 await page.locator('.canvas-heading h2').filter({ hasText: '设备故障' }).waitFor();
 await page.waitForTimeout(500);
 await page.screenshot({ path: 'docs/enableos-task-flow.png', fullPage: true });
@@ -137,12 +137,23 @@ await trashed.getByRole('button', { name: '恢复' }).click();
 await page.locator('.navigation').getByRole('button', { name: '任务', exact: true }).click();
 await page.locator('.task-card').filter({ hasText: '设备故障' }).first().waitFor();
 
+await page.getByRole('button', { name: '试验', exact: true }).click();
+await page.getByRole('heading', { name: '实验与决策' }).waitFor();
+await page.getByRole('button', { name: '记录待验证想法' }).click();
+const experimentDialog = page.getByRole('dialog', { name: '记录一个待验证想法' });
+await experimentDialog.getByText('系统会生成实验卡和验证计划，不预设必须使用 AI、自动化或开发软件。').waitFor();
+await experimentDialog.getByPlaceholder('例如：每周整理资料要重复复制粘贴，想尝试一个更省时但不会漏项的方法……').fill('每周整理阅读笔记总要重复分类，想先比较模板和流程是否能减少遗漏');
+await experimentDialog.getByRole('button', { name: '生成实验卡' }).click();
+await page.getByRole('dialog').locator('.detail-block.opportunity').waitFor();
+await page.screenshot({ path: 'docs/enableos-experiments.png', fullPage: true });
+await page.keyboard.press('Escape');
+
 await page.getByRole('button', { name: '资料', exact: true }).click();
 await page.getByRole('heading', { name: '证据库' }).waitFor();
 if (!page.url().endsWith('#/knowledge')) throw new Error('Browser route did not update');
 await page.reload({ waitUntil: 'domcontentloaded' });
 await page.getByRole('heading', { name: '证据库' }).waitFor();
-await page.getByPlaceholder('例如：设备报警后应该先确认什么？').fill('AI机会应该如何验证？');
+await page.getByPlaceholder('例如：这个决定当时依据了哪些事实？').fill('一个想法应该如何验证？');
 await page.getByRole('button', { name: '检索并回答' }).click();
 await page.locator('.knowledge-answer .citation-status.valid').waitFor();
 
@@ -155,12 +166,12 @@ if (violations.length) throw new Error(`Accessibility violations:\n${JSON.string
 
 await page.getByRole('button', { name: /搜索/ }).click();
 await page.getByRole('dialog', { name: '搜索工作空间' }).waitFor();
-await page.getByPlaceholder('搜索任务、项目、证据、实验或交付……').fill('AI机会');
-await page.getByRole('dialog', { name: '搜索工作空间' }).getByText('AI机会验证框架').waitFor();
-await page.getByRole('dialog', { name: '搜索工作空间' }).getByText('AI机会验证框架').click();
+await page.getByPlaceholder('搜索任务、项目、证据、实验或汇报……').fill('问题验证');
+await page.getByRole('dialog', { name: '搜索工作空间' }).getByText('问题验证检查清单').waitFor();
+await page.getByRole('dialog', { name: '搜索工作空间' }).getByText('问题验证检查清单').click();
 if (!page.url().includes('#/knowledge/')) throw new Error(`Search result did not open an entity route: ${page.url()}`);
 const openedKnowledgeTitle = await page.getByRole('dialog').locator('input').first().inputValue();
-if (openedKnowledgeTitle !== 'AI机会验证框架') throw new Error(`Search opened the wrong evidence item: ${openedKnowledgeTitle}`);
+if (openedKnowledgeTitle !== '问题验证检查清单') throw new Error(`Search opened the wrong evidence item: ${openedKnowledgeTitle}`);
 await page.keyboard.press('Escape');
 
 await page.evaluate(async () => { await navigator.serviceWorker.ready; });
@@ -177,16 +188,16 @@ await secondTab.close();
 const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'zh-CN' });
 const mobile = await mobileContext.newPage();
 await mobile.goto('http://127.0.0.1:4173', { waitUntil: 'domcontentloaded' });
-await mobile.getByRole('heading', { name: '从一条要求，推进到可交付结果。' }).waitFor();
+await mobile.getByRole('heading', { name: '从一个输入，推进到可验证结果。' }).waitFor();
 await mobile.waitForTimeout(800);
 await mobile.screenshot({ path: 'docs/enableos-web-mobile.png', fullPage: true });
 
 const mistakenFileEntry = await context.newPage();
 await mistakenFileEntry.goto(pathToFileURL(join(root, 'index.html')).href, { waitUntil: 'domcontentloaded' });
 await mistakenFileEntry.waitForURL('http://127.0.0.1:4173/');
-await mistakenFileEntry.getByRole('heading', { name: '从一条要求，推进到可交付结果。' }).waitFor();
+await mistakenFileEntry.getByRole('heading', { name: '从一个输入，推进到可验证结果。' }).waitFor();
 await mistakenFileEntry.close();
 
 if (errors.length) throw new Error(`Browser errors:\n${errors.join('\n')}`);
-process.stdout.write(JSON.stringify({ ok: true, desktop: 'docs/enableos-web-preview.png', settings: 'docs/enableos-settings.png', reportCenter: 'docs/enableos-report-center.png', taskFlow: 'docs/enableos-task-flow.png', taskEditor: 'docs/enableos-task-editor.png', mobile: 'docs/enableos-web-mobile.png' }));
+process.stdout.write(JSON.stringify({ ok: true, desktop: 'docs/enableos-web-preview.png', settings: 'docs/enableos-settings.png', reportCenter: 'docs/enableos-report-center.png', taskFlow: 'docs/enableos-task-flow.png', taskEditor: 'docs/enableos-task-editor.png', experiments: 'docs/enableos-experiments.png', mobile: 'docs/enableos-web-mobile.png' }));
 await browser.close();

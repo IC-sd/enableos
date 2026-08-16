@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Project, Task } from '../../shared/models';
-import { buildCompanyContext, clampScore, endOfWeek, projectProgress, startOfWeek, today, truncate } from './utils';
+import { buildWorkspaceContext, clampScore, endOfWeek, projectProgress, startOfWeek, today, truncate } from './utils';
 import { createDemoDatabase } from './browser-db';
 
 afterEach(() => vi.useRealTimers());
@@ -47,18 +47,18 @@ describe('workbench domain helpers', () => {
     const template = database.knowledge[0];
     database.knowledge = [
       { ...template, id: 'public', title: '公开资料', confidentiality: 'public' },
-      { ...template, id: 'internal', title: '内部资料', confidentiality: 'internal' },
+      { ...template, id: 'internal', title: '个人草稿', confidentiality: 'internal' },
       { ...template, id: 'sensitive', title: '敏感资料', confidentiality: 'sensitive' },
     ];
     database.settings.externalEvidenceScope = 'public-only';
-    expect(buildCompanyContext(database)).toContain('公开资料');
-    expect(buildCompanyContext(database)).not.toContain('内部资料');
-    expect(buildCompanyContext(database)).not.toContain('敏感资料');
+    expect(buildWorkspaceContext(database)).toContain('公开资料');
+    expect(buildWorkspaceContext(database)).not.toContain('个人草稿');
+    expect(buildWorkspaceContext(database)).not.toContain('敏感资料');
     database.settings.externalEvidenceScope = 'public-and-internal';
-    expect(buildCompanyContext(database)).toContain('内部资料');
-    expect(buildCompanyContext(database)).not.toContain('敏感资料');
-    const scoped = buildCompanyContext(database, '公开文档');
+    expect(buildWorkspaceContext(database)).toContain('个人草稿');
+    expect(buildWorkspaceContext(database)).not.toContain('敏感资料');
+    const scoped = buildWorkspaceContext(database, '公开文档');
     expect(scoped).toContain('公开资料');
-    expect(scoped).not.toContain('内部资料');
+    expect(scoped).not.toContain('个人草稿');
   });
 });

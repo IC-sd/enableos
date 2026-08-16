@@ -66,8 +66,8 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
 
   const updateStatus = (status: TaskStatus) => {
     if (!selectedTask || selectedTask.status === status) return;
-    mutate((current) => transitionTask(current, selectedTask.id, status, status === 'done' ? '完成工作线' : '推进工作线'));
-    notify(status === 'done' ? '这条工作线已完成并留痕' : '已切换到推进状态');
+    mutate((current) => transitionTask(current, selectedTask.id, status, status === 'done' ? '完成任务' : '推进任务'));
+    notify(status === 'done' ? '这项任务已完成并留痕' : '已切换到推进状态');
   };
 
   const toggleStep = (index: number) => {
@@ -84,23 +84,23 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
         <div className="intro-register">
           <span>今日 / {new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date())}</span>
           <i />
-          <span>{orderedTasks.filter((task) => task.status !== 'done').length} 条开放工作线</span>
+          <span>{orderedTasks.filter((task) => task.status !== 'done').length} 项开放任务</span>
         </div>
         <div className="intro-heading">
           <div>
-            <p className="eyebrow">工作线总览</p>
-            <h1>从一条要求，推进到可交付结果。</h1>
-            <p>按“原始要求 → 澄清 → 行动 → 证据 → 交付”推进，每一步都能修改、复核和追溯。</p>
+            <p className="eyebrow">任务工作台</p>
+            <h1>从一个输入，推进到可验证结果。</h1>
+            <p>按“原始输入 → 澄清 → 行动 → 依据 → 输出”推进，每一步都能修改、复核和追溯。</p>
           </div>
-          <button className="signal-button" onClick={onQuickCapture}><Plus size={18} />收下一条要求</button>
+          <button className="signal-button" onClick={onQuickCapture}><Plus size={18} />记录新任务</button>
         </div>
       </header>
 
       <div className="workline-desk">
-        <aside className="thread-index" aria-label="工作线目录">
+        <aside className="thread-index" aria-label="任务目录">
           <div className="thread-index-head">
-            <div><span>全部任务</span><strong>工作线目录</strong></div>
-            <button onClick={onQuickCapture} aria-label="新建工作线"><Plus size={16} /></button>
+            <div><span>全部任务</span><strong>任务目录</strong></div>
+            <button onClick={onQuickCapture} aria-label="新建任务"><Plus size={16} /></button>
           </div>
           <div className="thread-index-ruler" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
           <div className="thread-list">
@@ -118,7 +118,7 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
                 <i className={`thread-priority ${task.priority}`} title={`${task.priority} priority`} />
               </button>
             ))}
-            {!orderedTasks.length ? <div className="thread-empty"><CircleDashed size={20} /><strong>目录还是空的</strong><span>先记下第一条真实要求。</span></div> : null}
+            {!orderedTasks.length ? <div className="thread-empty"><CircleDashed size={20} /><strong>目录还是空的</strong><span>先记下第一个真实事项。</span></div> : null}
           </div>
           <button className="index-all-button" onClick={() => onNavigate('inbox')}>打开任务总表 <ArrowRight size={14} /></button>
         </aside>
@@ -133,17 +133,17 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
                   {selectedTask.dueDate ? <span>期限 {formatDate(selectedTask.dueDate)}</span> : null}
                 </div>
                 <h2>{selectedTask.title}</h2>
-                <p>{selectedTask.summary || '这条工作线还没有形成摘要，原始要求仍完整保留在下方。'}</p>
+                <p>{selectedTask.summary || '这项任务还没有形成摘要，原始输入仍完整保留在下方。'}</p>
                 <div className="canvas-actions">
                   {selectedTask.status !== 'doing' && selectedTask.status !== 'done' ? <button className="primary-button" onClick={() => updateStatus('doing')}><Play size={15} />开始推进</button> : null}
                   {selectedTask.status !== 'done' ? <button className="secondary-button" onClick={() => { if (window.confirm('确认这项工作已经完成并可以进入汇报记录吗？')) updateStatus('done'); }}><Check size={15} />完成并留痕</button> : <><span className="completion-seal"><CheckCircle2 size={16} />已形成完成记录</span><button className="secondary-button" onClick={() => updateStatus('planned')}><RotateCcw size={15} />重新打开</button></>}
                   <button className="text-button" onClick={() => onNavigate('inbox', selectedTask.id)}>编辑任务内容 <ArrowRight size={14} /></button>
                 </div>
-                <div className="workline-summary" aria-label="当前工作线进度摘要">
+                <div className="workline-summary" aria-label="当前任务进度摘要">
                   <div><span>澄清</span><strong>{selectedTask.clarificationAnswers.filter(Boolean).length}/{selectedTask.clarificationQuestions.length}</strong><small>已回答</small></div>
                   <div><span>行动</span><strong>{selectedTask.stepCompletion.filter(Boolean).length}/{selectedTask.steps.length}</strong><small>已完成</small></div>
                   <div><span>依据</span><strong>{relatedKnowledge.length + relatedScenarios.length}</strong><small>证据与实验</small></div>
-                  <div><span>交付</span><strong>{selectedTask.deliverables.length + relatedReports.length}</strong><small>预期与版本</small></div>
+                  <div><span>输出</span><strong>{selectedTask.deliverables.length + relatedReports.length}</strong><small>预期与版本</small></div>
                 </div>
               </header>
 
@@ -151,9 +151,9 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
                 <article className="flow-entry origin-entry">
                   <div className="flow-marker"><span>01</span></div>
                   <div className="flow-sheet">
-                    <div className="sheet-label"><strong>1. 原始要求</strong><span>保留来源，避免摘要覆盖原意</span></div>
+                    <div className="sheet-label"><strong>1. 原始输入</strong><span>保留来源，避免摘要覆盖原意</span></div>
                     <blockquote>{selectedTask.rawInput}</blockquote>
-                    <footer><span>来源：{selectedTask.source}</span><span>原话永久保留，不被 AI 摘要覆盖</span></footer>
+                    <footer><span>来源：{selectedTask.source}</span><span>原始内容永久保留，不被摘要覆盖</span></footer>
                   </div>
                 </article>
 
@@ -180,14 +180,14 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
                 <article className="flow-entry">
                   <div className="flow-marker"><span>04</span></div>
                   <div className="flow-sheet evidence-sheet">
-                    <div className="sheet-label"><strong>4. 依据与验证</strong><span>事实资料和实验结果直接关联本工作线</span></div>
+                    <div className="sheet-label"><strong>4. 依据与验证</strong><span>事实资料和实验结果直接关联本任务</span></div>
                     {relatedKnowledge.length || relatedScenarios.length ? (
                       <div className="evidence-ledger">
-                        {relatedKnowledge.slice(0, 3).map((item) => <button key={item.id} onClick={() => onNavigate('knowledge', item.id)}><BookOpenText size={15} /><span><strong>{item.title}</strong><small>{item.taskId === selectedTask.id ? '本工作线' : '项目上下文'} · {item.verificationStatus === 'confirmed' ? '已确认' : '待核验'}</small></span><ArrowRight size={14} /></button>)}
-                        {relatedScenarios.slice(0, 2).map((item) => <button key={item.id} onClick={() => onNavigate('scenarios', item.id)}><FlaskConical size={15} /><span><strong>{item.title}</strong><small>{item.taskId === selectedTask.id ? '本工作线' : '项目上下文'} · 价值 {item.valueScore}/100</small></span><ArrowRight size={14} /></button>)}
+                        {relatedKnowledge.slice(0, 3).map((item) => <button key={item.id} onClick={() => onNavigate('knowledge', item.id)}><BookOpenText size={15} /><span><strong>{item.title}</strong><small>{item.taskId === selectedTask.id ? '本任务' : '项目上下文'} · {item.verificationStatus === 'confirmed' ? '已确认' : '待核验'}</small></span><ArrowRight size={14} /></button>)}
+                        {relatedScenarios.slice(0, 2).map((item) => <button key={item.id} onClick={() => onNavigate('scenarios', item.id)}><FlaskConical size={15} /><span><strong>{item.title}</strong><small>{item.taskId === selectedTask.id ? '本任务' : '项目上下文'} · 价值 {item.valueScore}/100</small></span><ArrowRight size={14} /></button>)}
                       </div>
                     ) : (
-                      <button className="sheet-callout" onClick={() => onNavigate(selectedTask.projectId ? 'knowledge' : 'inbox', selectedTask.projectId ? undefined : selectedTask.id)}><Link2 size={17} /><span><strong>这条线还没有可追溯依据</strong><small>{selectedTask.projectId ? '去证据库补充资料、事实或决定' : '先在任务编辑中关联项目，再沉淀证据和实验'}</small></span><ArrowRight size={15} /></button>
+                      <button className="sheet-callout" onClick={() => onNavigate(selectedTask.projectId ? 'knowledge' : 'inbox', selectedTask.projectId ? undefined : selectedTask.id)}><Link2 size={17} /><span><strong>这项任务还没有可追溯依据</strong><small>{selectedTask.projectId ? '去证据库补充资料、事实或决定' : '先在任务编辑中关联项目，再沉淀证据和实验'}</small></span><ArrowRight size={15} /></button>
                     )}
                   </div>
                 </article>
@@ -195,16 +195,16 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
                 <article className="flow-entry final-entry">
                   <div className="flow-marker"><span>05</span></div>
                   <div className="flow-sheet delivery-sheet">
-                    <div className="sheet-label"><strong>5. 交付与验收</strong><span>先定义完成标准，再形成汇报版本</span></div>
+                    <div className="sheet-label"><strong>5. 输出与完成标准</strong><span>先定义完成标准，再形成汇报版本</span></div>
                     <div className="deliverable-strip">
-                      {selectedTask.deliverables.length ? selectedTask.deliverables.map((item, index) => <span key={`${item}-${index}`}><b>{String(index + 1).padStart(2, '0')}</b>{item}</span>) : <span><b>—</b>尚未定义交付物</span>}
+                      {selectedTask.deliverables.length ? selectedTask.deliverables.map((item, index) => <span key={`${item}-${index}`}><b>{String(index + 1).padStart(2, '0')}</b>{item}</span>) : <span><b>—</b>尚未定义预期结果</span>}
                     </div>
                     <div className="acceptance-block">
-                      <strong>验收标准</strong>
+                      <strong>完成标准</strong>
                       {selectedTask.acceptanceCriteria.length ? <ul>{selectedTask.acceptanceCriteria.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul> : <p>尚未定义。建议写成“谁确认、什么结果、达到什么条件”。</p>}
                     </div>
                     {relatedReports.length ? <div className="linked-report"><FileChartColumn size={16} /><span><strong>{relatedReports[0].title}</strong><small>已有 {relatedReports.length} 个可追溯版本</small></span></div> : null}
-                    <button className="text-button" onClick={() => onNavigate('reports')}>打开交付编辑器 <ArrowRight size={14} /></button>
+                    <button className="text-button" onClick={() => onNavigate('reports')}>打开汇报编辑器 <ArrowRight size={14} /></button>
                   </div>
                 </article>
               </div>
@@ -212,20 +212,20 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
           ) : (
             <div className="blank-workline">
               <span>NO. 000</span>
-              <h2>先把真实要求放上桌面。</h2>
-              <p>不需要先想清楚它属于哪个模块。粘贴原话后，系统会保留来源，并整理待确认问题、行动路径和交付预期。</p>
-              <button className="signal-button" onClick={onQuickCapture}><Plus size={18} />记录第一条要求</button>
+              <h2>先把一个真实事项放上桌面。</h2>
+              <p>不需要先想清楚它属于哪个模块。写下原始输入后，系统会保留来源，并整理待确认问题、行动路径和预期结果。</p>
+              <button className="signal-button" onClick={onQuickCapture}><Plus size={18} />记录第一个事项</button>
             </div>
           )}
         </main>
 
-        <aside className="workline-context" aria-label="当前工作线上下文">
-          <div className="context-head"><span>当前工作线</span><i /></div>
+        <aside className="workline-context" aria-label="当前任务上下文">
+          <div className="context-head"><span>当前任务</span><i /></div>
           <section className="context-section">
             <p className="context-label">闭环覆盖</p>
             <div className="coverage-score"><strong>{flowCoverage}</strong><span>/ 5</span></div>
             <div className="coverage-rule">{[0, 1, 2, 3, 4].map((index) => <i key={index} className={index < flowCoverage ? 'filled' : ''} />)}</div>
-            <small>要求、澄清、行动、依据、交付</small>
+            <small>输入、澄清、行动、依据、输出</small>
           </section>
 
           <section className="context-section">
@@ -234,10 +234,10 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
           </section>
 
           <section className="context-section context-counts">
-            <p className="context-label">随线资产</p>
+            <p className="context-label">关联记录</p>
             <button onClick={() => onNavigate('knowledge', relatedKnowledge[0]?.id)}><span>证据</span><strong>{relatedKnowledge.length}</strong></button>
             <button onClick={() => onNavigate('scenarios', relatedScenarios[0]?.id)}><span>实验</span><strong>{relatedScenarios.length}</strong></button>
-            <button onClick={() => onNavigate('reports', relatedReports[0]?.id)}><span>交付版本</span><strong>{relatedReports.length}</strong></button>
+            <button onClick={() => onNavigate('reports', relatedReports[0]?.id)}><span>汇报版本</span><strong>{relatedReports.length}</strong></button>
           </section>
 
           <section className="context-section boundary-note">

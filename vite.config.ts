@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'EnableOS · AI 赋能工作底稿',
+        name: 'EnableOS · 本地优先的工作空间',
         short_name: 'EnableOS',
-        description: '让原始要求、澄清、行动、证据、实验与交付沿着同一条工作线生长。',
+        description: '把任务、项目、资料、实验与输出放进一个本地优先的个人工作空间。',
         theme_color: '#111c2b',
         background_color: '#eeeae0',
         display: 'standalone',

@@ -69,7 +69,7 @@ function contextTerms(value: string): string[] {
   return [...new Set(terms.filter((term) => term.length > 1))];
 }
 
-export function buildCompanyContext(database: AppDatabase, query = ''): string {
+export function buildWorkspaceContext(database: AppDatabase, query = ''): string {
   const allowedKnowledge = database.knowledge.filter((item) => isActive(item) && (item.confidentiality === 'public' || (database.settings.externalEvidenceScope === 'public-and-internal' && item.confidentiality === 'internal')));
   const terms = contextTerms(query);
   const rankedKnowledge = allowedKnowledge
@@ -85,15 +85,15 @@ export function buildCompanyContext(database: AppDatabase, query = ''): string {
     .slice(0, terms.length ? 6 : 8);
   const knowledge = rankedKnowledge.map(({ item }) => `${item.title}：${item.summary || item.content.slice(0, 160)}`).join('\n');
   return [
-    `公司：${database.profile.company || '尚未填写'}`,
-    `岗位：${database.profile.role || '尚未填写'}`,
-    `部门：${database.profile.department || '尚未填写'}`,
-    `外部AI规则：${database.settings.externalAiPolicy === 'approved-with-rules' ? '按已确认规则允许' : database.settings.externalAiPolicy === 'forbidden' ? '禁止发送公司资料' : '尚未确认'}`,
-    `可发送证据范围：${database.settings.externalEvidenceScope === 'public-and-internal' ? '公开和内部（敏感除外）' : '仅公开'}`,
-    `批准工具：${database.settings.approvedTools || '尚未填写'}`,
+    `组织或使用场景：${database.profile.company || '个人'}`,
+    `角色或身份：${database.profile.role || '尚未填写'}`,
+    `团队或领域：${database.profile.department || '尚未填写'}`,
+    `外部AI规则：${database.settings.externalAiPolicy === 'approved-with-rules' ? '按已确认规则允许' : database.settings.externalAiPolicy === 'forbidden' ? '仅使用本地能力' : '尚未决定'}`,
+    `可发送证据范围：${database.settings.externalEvidenceScope === 'public-and-internal' ? '公开和非公开（敏感除外）' : '仅公开'}`,
+    `允许工具：${database.settings.approvedTools || '尚未填写'}`,
     `资料处理规则：${database.settings.dataHandlingNotes || '尚未填写'}`,
-    `导师预期：${database.settings.mentorExpectation || '尚未填写'}`,
-    `汇报节奏：${database.settings.reportCadence || '尚未填写'}`,
+    `当前阶段期待：${database.settings.mentorExpectation || '尚未填写'}`,
+    `复盘或同步节奏：${database.settings.reportCadence || '尚未填写'}`,
     knowledge ? `与当前任务相关、且允许进入模型上下文的资料：\n${knowledge}` : '没有找到允许发送且与当前任务相关的资料。',
   ].join('\n');
 }

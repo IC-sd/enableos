@@ -52,8 +52,8 @@ export function localTaskAnalysis(rawInput: string): TaskAnalysis {
     priority: isUrgent ? 'high' : 'medium',
     clarificationQuestions: questions,
     steps,
-    deliverables: isPrototype ? ['场景说明', '可运行原型', '测试问题与结果', '演示说明和下一步建议'] : ['任务结论', '过程证据', '可提交成果'],
-    risks: ['目标未确认就直接实现', '使用未经授权的内部资料', '只展示成功结果而未记录失败案例'],
+    deliverables: isPrototype ? ['问题说明', '最小可验证原型', '测试用例与结果', '结论和下一步建议'] : ['任务结论', '过程证据', '可使用结果'],
+    risks: ['目标未确认就直接实现', '使用了不应外发的资料', '只记录成功结果而忽略失败案例'],
     suggestedDueDate: dueDateFromText(text, isUrgent),
   };
 }
@@ -61,14 +61,14 @@ export function localTaskAnalysis(rawInput: string): TaskAnalysis {
 export function localScenarioAnalysis(rawInput: string): ScenarioAnalysis {
   const text = rawInput.trim();
   return {
-    title: compact(text.replace(/[，。；：]/g, ' '), 26) || '待验证的AI机会',
-    pain: `业务描述可能包含重复处理、信息分散或依赖个人经验的问题：${compact(text, 100)}`,
-    currentProcess: '待补充：谁在什么情况下开始、依次使用哪些资料或系统、哪里耗时或容易出错。',
-    aiOpportunity: '优先验证信息提取、检索、分类、摘要或草稿生成；最终判断与高风险操作保留人工确认。',
-    inputs: '历史样例、现行流程、标准文档、用户提问或业务记录。',
-    outputs: '带来源的建议、结构化结果、待人工确认项和可追踪记录。',
-    prototypePlan: ['访谈真实使用者', '收集脱敏样例', '定义基线与失败标准', '完成单一闭环原型', '盲测并记录错误类型'],
-    successMetrics: ['单次处理时间变化', '结果完整率与来源正确率', '人工修改比例', '真实用户继续使用意愿'],
+    title: compact(text.replace(/[，。；：]/g, ' '), 26) || '待验证的想法',
+    pain: `当前描述可能包含重复劳动、信息分散、结果不稳定或目标不清的问题：${compact(text, 100)}`,
+    currentProcess: '待补充：谁在什么情况下开始、目前怎样处理、使用哪些资料或工具、哪里耗时或容易出错。',
+    aiOpportunity: '先验证最小改变是否有效；它可以是流程调整、模板、工具、自动化或 AI，最终判断与高风险操作保留人工确认。',
+    inputs: '现有样例、当前做法、约束条件、使用者反馈和可核验资料。',
+    outputs: '可比较的结果、失败记录、待确认项和下一步决策。',
+    prototypePlan: ['确认真实使用者或使用场景', '记录当前基线', '定义失败与停止条件', '实施一个最小改变', '使用固定样例复测并记录差异'],
+    successMetrics: ['完成时间或投入变化', '结果完整性与正确性', '返工或人工修正比例', '使用者是否愿意继续采用'],
     risk: 'medium',
     valueScore: 65,
     feasibilityScore: 62,

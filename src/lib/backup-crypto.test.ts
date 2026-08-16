@@ -3,7 +3,7 @@ import { decryptBackup, encryptBackup, isEncryptedBackup } from './backup-crypto
 
 describe('encrypted backup', () => {
   it('round-trips structured data without exposing plaintext', async () => {
-    const original = { privateNote: '内部设备故障记录', count: 3 };
+    const original = { privateNote: '个人未公开记录', count: 3 };
     const encrypted = await encryptBackup(original, 'correct horse battery staple');
     expect(isEncryptedBackup(encrypted)).toBe(true);
     expect(JSON.stringify(encrypted)).not.toContain(original.privateNote);

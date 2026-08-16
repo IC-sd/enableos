@@ -18,6 +18,15 @@ beforeAll(() => {
 });
 
 describe('normalized browser database', () => {
+  it('starts with a neutral workspace that does not assume a company or AI role', async () => {
+    const { createDemoDatabase } = await import('./browser-db');
+    const database = createDemoDatabase();
+    expect(database.profile).toMatchObject({ company: '', role: '', department: '' });
+    expect(database.projects[0].title).toBe('建立可靠的每周工作系统');
+    expect(database.tasks[0].title).toBe('明确本周最重要的一项结果');
+    expect(database.knowledge[0].title).toBe('问题验证检查清单');
+  });
+
   it('persists entity tables and clears the recovery journal', async () => {
     const { loadDatabase, saveDatabase } = await import('./browser-db');
     const database = await loadDatabase();

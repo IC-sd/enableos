@@ -22,7 +22,7 @@ export const entityCollection = {
 } as const;
 
 export const entityTypeLabel: Record<RevisableEntityType, string> = {
-  project: '项目', task: '任务', knowledge: '资料', scenario: '试验', report: '交付',
+  project: '项目', task: '任务', knowledge: '资料', scenario: '实验', report: '汇报',
 };
 
 export function isActive<T extends { deletedAt?: string }>(entity: T): boolean {

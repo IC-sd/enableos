@@ -7,7 +7,7 @@ describe('local AI fallbacks', () => {
     const result = localTaskAnalysis('明天尽快搭建一个知识库 Agent 原型');
     expect(result.priority).toBe('high');
     expect(result.steps).toContain('设计输入、知识来源、人工兜底与工作流');
-    expect(result.deliverables).toContain('测试问题与结果');
+    expect(result.deliverables).toContain('测试用例与结果');
     expect(result.clarificationQuestions.length).toBeGreaterThan(3);
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     const expected = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
@@ -19,6 +19,13 @@ describe('local AI fallbacks', () => {
     expect(result.prototypePlan.join('')).toContain('基线');
     expect(result.aiOpportunity).toContain('人工确认');
     expect(result.successMetrics.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('does not force an AI solution onto an ordinary personal problem', () => {
+    const result = localScenarioAnalysis('每周整理阅读笔记总要重复分类');
+    expect(result.aiOpportunity).toContain('流程调整、模板、工具、自动化或 AI');
+    expect(result.prototypePlan).toContain('记录当前基线');
+    expect(result.outputs).toContain('下一步决策');
   });
 
   it('only reports recorded work', () => {
