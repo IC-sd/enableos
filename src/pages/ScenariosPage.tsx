@@ -5,6 +5,7 @@ import type { EvaluationCase, ExperimentRun, Scenario, ScenarioDecision, Scenari
 import { EmptyState } from '../components/EmptyState';
 import { Modal } from '../components/Modal';
 import { useAppStore } from '../context/AppStore';
+import { useConfirm } from '../context/ConfirmationContext';
 import { desktop } from '../lib/bridge';
 import { activity, buildWorkspaceContext, clampScore, randomUUID } from '../lib/utils';
 import { isActive, prependRevision, restoreEntityRevision } from '../lib/entity-history';
@@ -16,6 +17,7 @@ type RunResultDraft = { actual: string; score: number; passed: boolean; notes: s
 
 export function ScenariosPage({ initialSelectedId }: { initialSelectedId?: string }) {
   const { database, mutate, notify } = useAppStore();
+  const confirm = useConfirm();
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || null);
   const [description, setDescription] = useState('');
@@ -104,8 +106,10 @@ export function ScenariosPage({ initialSelectedId }: { initialSelectedId?: strin
     notify('评测用例已加入');
   };
 
-  const removeCase = (caseId: string) => {
+  const removeCase = async (caseId: string) => {
     if (!selected) return;
+    const testCase = selected.testCases.find((item) => item.id === caseId);
+    if (!testCase || !await confirm({ title: '删除测试用例', message: `测试用例“${testCase.title}”将从当前实验中移除；修改前版本仍保留在历史快照中。`, confirmLabel: '删除用例', tone: 'danger' })) return;
     patchScenario(selected.id, { testCases: selected.testCases.filter((item) => item.id !== caseId) });
   };
 
@@ -135,8 +139,8 @@ export function ScenariosPage({ initialSelectedId }: { initialSelectedId?: strin
     if (!result.canceled) notify('评测包已导出');
   };
 
-  const remove = () => {
-    if (!selected || !window.confirm(`将实验“${selected.title}”移入回收站吗？`)) return;
+  const remove = async () => {
+    if (!selected || !await confirm({ title: '移入回收站', message: `实验“${selected.title}”会移入回收站，之后可以恢复。`, confirmLabel: '移入回收站', tone: 'danger' })) return;
     const deletedAt = new Date().toISOString();
     mutate((current) => ({ ...current, scenarios: current.scenarios.map((scenario) => scenario.id === selected.id ? { ...scenario, deletedAt, updatedAt: deletedAt } : scenario), revisions: prependRevision(current, 'scenario', selected, 'delete'), activities: [activity('scenario', '实验移入回收站', selected.title, selected.id), ...current.activities] })); setSelectedId(null); notify('实验已移入回收站', 'info');
   };
@@ -160,7 +164,7 @@ export function ScenariosPage({ initialSelectedId }: { initialSelectedId?: strin
       <div className="detail-columns"><section className="detail-block"><label>可检验假设</label><p>{selected.hypothesis || '待补充'}</p></section><section className="detail-block"><label>现有基线</label><p>{selected.baseline || '待补充量化基线'}</p></section></div>
 
       <section className="evaluation-section"><div className="section-title compact"><div><p className="eyebrow">固定测试集</p><h2>评测用例（{selected.testCases.length}）</h2></div></div>
-        {selected.testCases.map((testCase, index) => <div className="evaluation-case" key={testCase.id}><div><strong>{index + 1}. {testCase.title}</strong><p>输入：{testCase.input}</p><p>期望：{testCase.expected}</p>{testCase.requirement ? <small>判定要求：{testCase.requirement} · 权重 {testCase.weight}</small> : null}</div><button className="icon-button" aria-label="删除用例" onClick={() => removeCase(testCase.id)}><Trash2 size={15} /></button></div>)}
+        {selected.testCases.map((testCase, index) => <div className="evaluation-case" key={testCase.id}><div><strong>{index + 1}. {testCase.title}</strong><p>输入：{testCase.input}</p><p>期望：{testCase.expected}</p>{testCase.requirement ? <small>判定要求：{testCase.requirement} · 权重 {testCase.weight}</small> : null}</div><button className="icon-button" aria-label="删除用例" onClick={() => void removeCase(testCase.id)}><Trash2 size={15} /></button></div>)}
         <details className="experiment-form"><summary>＋ 添加测试用例</summary><div className="form-grid"><label className="field"><span>用例名称</span><input value={caseDraft.title} onChange={(event) => setCaseDraft({ ...caseDraft, title: event.target.value })} /></label><label className="field"><span>权重</span><input type="number" min="0.1" step="0.1" value={caseDraft.weight} onChange={(event) => setCaseDraft({ ...caseDraft, weight: Number(event.target.value) || 1 })} /></label><label className="field span-2"><span>输入</span><textarea rows={3} value={caseDraft.input} onChange={(event) => setCaseDraft({ ...caseDraft, input: event.target.value })} /></label><label className="field span-2"><span>期望输出</span><textarea rows={3} value={caseDraft.expected} onChange={(event) => setCaseDraft({ ...caseDraft, expected: event.target.value })} /></label><label className="field span-2"><span>通过要求</span><input value={caseDraft.requirement} onChange={(event) => setCaseDraft({ ...caseDraft, requirement: event.target.value })} placeholder="优先写可直接判断的规则" /></label></div><button className="secondary-button" disabled={!caseDraft.title.trim() || !caseDraft.input.trim() || !caseDraft.expected.trim()} onClick={addCase}>加入测试集</button></details>
       </section>
 
@@ -170,7 +174,7 @@ export function ScenariosPage({ initialSelectedId }: { initialSelectedId?: strin
 
       <section className="decision-panel"><div><p className="eyebrow">Decision log</p><h2>实验决策：{decisionNames[selected.decision]}</h2></div><textarea rows={3} value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} placeholder="依据哪些结果决定继续、采用或停止？仍有哪些限制？" /><div className="inline-actions"><button className="secondary-button" onClick={() => saveDecision('iterate')}>继续迭代</button><button className="secondary-button" onClick={() => saveDecision('stop')}>停止</button><button className="primary-button" onClick={() => saveDecision('adopt')}>采用</button></div></section>
       <HistoryPanel database={database} entityType="scenario" entityId={selected.id} onRestore={(revisionId) => { mutate((current) => restoreEntityRevision(current, revisionId)); setSelectedId(null); setScenarioDraft(null); notify('已恢复所选实验版本'); }} />
-      <footer className="modal-actions split"><button className="danger-text-button" onClick={remove}><Trash2 size={16} />移入回收站</button><div><button className="secondary-button" onClick={() => void exportEvaluation()}><Download size={16} />导出评测包</button>{selected.status === 'discovered' ? <button className="primary-button" onClick={() => updateStatus('validating')}><CheckCircle2 size={16} />开始验证</button> : null}{selected.status === 'validating' ? <button className="primary-button" onClick={() => updateStatus('prototype')}><Sparkles size={16} />进入试行</button> : null}<button className="secondary-button" onClick={() => updateStatus('archived')}>归档</button></div></footer>
+      <footer className="modal-actions split"><button className="danger-text-button" onClick={() => void remove()}><Trash2 size={16} />移入回收站</button><div><button className="secondary-button" onClick={() => void exportEvaluation()}><Download size={16} />导出评测包</button>{selected.status === 'discovered' ? <button className="primary-button" onClick={() => updateStatus('validating')}><CheckCircle2 size={16} />开始验证</button> : null}{selected.status === 'validating' ? <button className="primary-button" onClick={() => updateStatus('prototype')}><Sparkles size={16} />进入试行</button> : null}<button className="secondary-button" onClick={() => updateStatus('archived')}>归档</button></div></footer>
     </div> : null}</Modal>
   </div>;
 }

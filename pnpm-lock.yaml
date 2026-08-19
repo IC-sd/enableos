@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       dexie:
-        specifier: ^4.0.11
-        version: 4.4.4
+        specifier: ^4.4.5
+        version: 4.4.5
       fflate:
         specifier: ^0.8.3
         version: 0.8.3
@@ -27,8 +27,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       read-excel-file:
-        specifier: ^9.3.7
-        version: 9.3.7
+        specifier: ^9.3.10
+        version: 9.3.10
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -1446,8 +1446,8 @@ packages:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
 
-  dexie@4.4.4:
-    resolution: {integrity: sha512-jIwsYI8Os2hgnqc6O49YwFDKGc5v5QjGx0wPVp543ip1F53VFAKMLthV2pQosQcVTv3eAskTWYspOx195PM0FQ==}
+  dexie@4.4.5:
+    resolution: {integrity: sha512-wWCHdihT3dmlUSuNhn5mMZDWSpG0suxjAni7YjjiZdzabZcKmy3uNZGZ7AeYYXBoLbpSXX35fikPLkPC44Osiw==}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -1946,8 +1946,8 @@ packages:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
     engines: {node: '>=0.10.0'}
 
-  read-excel-file@9.3.7:
-    resolution: {integrity: sha512-hYbfCWds+QcdLVNI+BN8OIJ+l2T2rt/PVFWYTO5HlDkILZO9RXfmensIvGYxurzUNos+8PxnvwyAe+dMUrcaEQ==}
+  read-excel-file@9.3.10:
+    resolution: {integrity: sha512-zFcBdzunLCGBmLRT4Q3mLPJnhKPAXXfGAZ83feODlEqX2aRUbgF1h/n2oY0UF7I8tVwnJNRas6fTRD5veDUs+g==}
     engines: {node: '>=18'}
 
   reflect.getprototypeof@1.0.10:
@@ -3803,7 +3803,7 @@ snapshots:
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
 
-  dexie@4.4.4: {}
+  dexie@4.4.5: {}
 
   dunder-proto@1.0.1:
     dependencies:
@@ -4366,7 +4366,7 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
 
-  read-excel-file@9.3.7:
+  read-excel-file@9.3.10:
     dependencies:
       fflate: 0.8.3
       saxen: 11.1.1

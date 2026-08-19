@@ -52,7 +52,7 @@ export const desktop: DesktopBridge = {
   data: {
     load: loadDatabase,
     save: async (database) => { await saveDatabase(database); return { ok: true }; },
-    resetDemo: async () => { const database = createDemoDatabase(); await saveDatabase(database); return database; },
+    resetDemo: async () => createDemoDatabase(),
   },
   ai: {
     analyzeTask: async (rawInput, context) => withModel<TaskAnalysis>(
@@ -160,5 +160,5 @@ export const desktop: DesktopBridge = {
     minimize: async () => undefined, toggleMaximize: async () => false, close: async () => undefined,
     isMaximized: async () => false, onQuickCapture: () => () => undefined,
   },
-  app: { getInfo: async () => ({ version: '3.4.0', platform: 'Web · PWA', dataPath: '当前浏览器的 IndexedDB（enableos-workspace）' }) },
+  app: { getInfo: async () => ({ version: '3.5.0', platform: 'Web · PWA', dataPath: '当前浏览器的 IndexedDB（enableos-workspace）' }) },
 };

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import type { RevisableEntityType } from '../../shared/models';
 import { EmptyState } from '../components/EmptyState';
 import { useAppStore } from '../context/AppStore';
+import { useConfirm } from '../context/ConfirmationContext';
 import { entityCollection, entityTypeLabel, prependRevision } from '../lib/entity-history';
 import { activity, formatFullDate } from '../lib/utils';
 
@@ -10,6 +11,7 @@ const typeIcon = { project: FolderKanban, task: NotebookText, knowledge: Noteboo
 
 export function TrashPage() {
   const { database, mutate, notify } = useAppStore();
+  const confirm = useConfirm();
   const [filter, setFilter] = useState<RevisableEntityType | 'all'>('all');
   const entries = useMemo(() => {
     if (!database) return [];
@@ -38,8 +40,8 @@ export function TrashPage() {
     notify('已恢复到原位置');
   };
 
-  const removeForever = (type: RevisableEntityType, id: string, title: string) => {
-    if (!window.confirm(`“${title}”将被永久删除，且无法从修改历史恢复。确定继续吗？`)) return;
+  const removeForever = async (type: RevisableEntityType, id: string, title: string) => {
+    if (!await confirm({ title: '永久删除', message: `“${title}”及其修改历史将被永久删除，无法恢复。`, confirmLabel: '永久删除', tone: 'danger' })) return;
     mutate((current) => {
       const collection = entityCollection[type];
       const next = { ...current, [collection]: current[collection].filter((item) => item.id !== id), revisions: current.revisions.filter((revision) => !(revision.entityType === type && revision.entityId === id)) };
@@ -50,5 +52,5 @@ export function TrashPage() {
     notify('已永久删除', 'info');
   };
 
-  return <div className="page trash-page"><header className="page-header"><div><p className="eyebrow">Recovery</p><h1>回收站</h1><p>删除先进入这里。恢复会保留原有关联；只有在这里再次确认才会永久删除。</p></div></header><div className="toolbar"><div className="segmented-control">{([['all', '全部'], ['task', '任务'], ['project', '项目'], ['knowledge', '资料'], ['scenario', '实验'], ['report', '汇报']] as const).map(([key, label]) => <button key={key} className={filter === key ? 'active' : ''} onClick={() => setFilter(key)}>{label}</button>)}</div><span className="toolbar-count">{entries.length} 项</span></div>{entries.length ? <div className="trash-list">{entries.map(({ type, entity }) => { const Icon = typeIcon[type]; return <article key={`${type}-${entity.id}`}><div className="trash-entity-icon"><Icon size={18} /></div><div><span>{entityTypeLabel[type]}</span><h2>{entity.title}</h2><p>移入时间 {formatFullDate(entity.deletedAt)} · {database.revisions.filter((revision) => revision.entityType === type && revision.entityId === entity.id).length} 个历史快照</p></div><div><button className="secondary-button" onClick={() => restore(type, entity.id)}><ArchiveRestore size={15} />恢复</button><button className="danger-text-button" onClick={() => removeForever(type, entity.id, entity.title)}><Trash2 size={15} />永久删除</button></div></article>; })}</div> : <EmptyState icon={Trash2} title="回收站是空的" description="任务、项目、资料、实验和汇报被删除后会先进入这里。" />}</div>;
+  return <div className="page trash-page"><header className="page-header"><div><p className="eyebrow">Recovery</p><h1>回收站</h1><p>删除先进入这里。恢复会保留原有关联；只有在这里再次确认才会永久删除。</p></div></header><div className="toolbar"><div className="segmented-control">{([['all', '全部'], ['task', '任务'], ['project', '项目'], ['knowledge', '资料'], ['scenario', '实验'], ['report', '汇报']] as const).map(([key, label]) => <button key={key} className={filter === key ? 'active' : ''} onClick={() => setFilter(key)}>{label}</button>)}</div><span className="toolbar-count">{entries.length} 项</span></div>{entries.length ? <div className="trash-list">{entries.map(({ type, entity }) => { const Icon = typeIcon[type]; return <article key={`${type}-${entity.id}`}><div className="trash-entity-icon"><Icon size={18} /></div><div><span>{entityTypeLabel[type]}</span><h2>{entity.title}</h2><p>移入时间 {formatFullDate(entity.deletedAt)} · {database.revisions.filter((revision) => revision.entityType === type && revision.entityId === entity.id).length} 个历史快照</p></div><div><button className="secondary-button" onClick={() => restore(type, entity.id)}><ArchiveRestore size={15} />恢复</button><button className="danger-text-button" onClick={() => void removeForever(type, entity.id, entity.title)}><Trash2 size={15} />永久删除</button></div></article>; })}</div> : <EmptyState icon={Trash2} title="回收站是空的" description="任务、项目、资料、实验和汇报被删除后会先进入这里。" />}</div>;
 }

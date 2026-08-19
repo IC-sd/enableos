@@ -36,11 +36,32 @@ const backupDialog = page.getByRole('dialog', { name: '导出加密备份' });
 await backupDialog.getByLabel('备份密码').waitFor();
 if (await backupDialog.getByLabel('备份密码').getAttribute('type') !== 'password') throw new Error('Backup password field is not masked');
 await page.keyboard.press('Escape');
+const backupChooserPromise = page.waitForEvent('filechooser');
+await page.getByRole('button', { name: '导入备份' }).click();
+const backupChooser = await backupChooserPromise;
+await backupChooser.setFiles({
+  name: 'preview-only.json',
+  mimeType: 'application/json',
+  buffer: Buffer.from(JSON.stringify({ projects: [{ id: 'preview-project' }], tasks: [{ id: 'preview-task-1' }, { id: 'preview-task-2' }], knowledge: [{ id: 'preview-note-1' }, { id: 'preview-note-2' }, { id: 'preview-note-3' }], scenarios: [], reports: [{ id: 'preview-report' }] })),
+});
+const importConfirmation = page.getByRole('alertdialog', { name: '确认导入备份' });
+await importConfirmation.getByText('即将导入 1 个项目、2 个任务、3 份资料、0 个实验和 1 份汇报。', { exact: false }).waitFor();
+await importConfirmation.getByRole('button', { name: '取消' }).click();
 await page.getByRole('heading', { name: '工作区健康检查' }).waitFor();
 await page.locator('.mode-selector button').filter({ hasText: '模型增强' }).click();
 await page.getByRole('combobox', { name: '接口协议' }).waitFor();
 await page.getByPlaceholder('例如 text-embedding-3-small').waitFor();
 await page.getByText(/最近诊断/).waitFor();
+await page.getByRole('button', { name: '恢复示例数据' }).click();
+const resetConfirmation = page.getByRole('alertdialog', { name: '确认恢复示例数据' });
+await resetConfirmation.getByText(/当前项目、任务、资料、实验、汇报和历史记录/).waitFor();
+await resetConfirmation.getByRole('button', { name: '取消' }).click();
+await resetConfirmation.waitFor({ state: 'detached' });
+await page.getByRole('button', { name: '跟随系统' }).click();
+await page.emulateMedia({ colorScheme: 'dark' });
+await page.waitForFunction(() => document.documentElement.dataset.theme === 'dark');
+await page.emulateMedia({ colorScheme: 'light' });
+await page.waitForFunction(() => document.documentElement.dataset.theme === 'light');
 await page.screenshot({ path: 'docs/enableos-settings.png', fullPage: true });
 
 await page.getByRole('button', { name: '汇报' }).click();
@@ -97,8 +118,18 @@ if (!(await persistedTask.textContent())?.includes('设备故障')) throw new Er
 await persistedTask.click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: 'docs/enableos-task-editor.png', fullPage: true });
-page.once('dialog', (dialog) => dialog.accept());
-await page.getByRole('dialog').getByRole('button', { name: '标记完成' }).click();
+const taskEditor = page.getByRole('dialog').filter({ hasText: '设备故障' }).first();
+await taskEditor.getByRole('button', { name: '标记完成' }).click();
+const completeConfirmation = page.getByRole('alertdialog', { name: '确认完成任务' });
+await completeConfirmation.getByText(/将标记为已完成并进入汇报记录/).waitFor();
+await page.waitForTimeout(250);
+const confirmationCancel = completeConfirmation.getByRole('button', { name: '取消' });
+if (!await confirmationCancel.evaluate((element) => document.activeElement === element)) throw new Error('Confirmation dialog did not place initial focus on the safe cancel action');
+await page.screenshot({ path: 'docs/enableos-confirmation.png', fullPage: true });
+await confirmationCancel.click();
+await taskEditor.waitFor();
+await taskEditor.getByRole('button', { name: '标记完成' }).click();
+await page.getByRole('alertdialog', { name: '确认完成任务' }).getByRole('button', { name: '标记完成' }).click();
 await page.waitForTimeout(300);
 await page.locator('.segmented-control').getByRole('button', { name: '已完成' }).click();
 const completedTask = page.locator('.task-card').filter({ hasText: '设备故障' }).first();
@@ -123,11 +154,16 @@ if (!reopened || reopened.status === 'done' || reopened.completedAt) throw new E
 await page.getByRole('button', { name: '今天', exact: true }).click();
 await page.getByRole('heading', { name: '今天', exact: true }).waitFor();
 await page.getByText(/未来 7 天|今天到期|尚未排期/).first().waitFor();
+const todayTask = page.locator('.today-task-list article').filter({ hasText: '设备故障' }).first();
+await todayTask.getByRole('button', { name: '完成', exact: true }).click();
+const todayConfirmation = page.getByRole('alertdialog', { name: '确认完成任务' });
+await todayConfirmation.getByRole('button', { name: '取消' }).click();
+await todayTask.waitFor();
 await page.screenshot({ path: 'docs/enableos-today.png', fullPage: true });
 await page.getByRole('button', { name: '任务', exact: true }).click();
 await page.locator('.task-card').filter({ hasText: '设备故障' }).first().click();
-page.once('dialog', (dialog) => dialog.accept());
-await page.getByRole('dialog').getByRole('button', { name: '移入回收站' }).click();
+await page.getByRole('dialog').filter({ hasText: '设备故障' }).first().getByRole('button', { name: '移入回收站' }).click();
+await page.getByRole('alertdialog', { name: '移入回收站' }).getByRole('button', { name: '移入回收站' }).click();
 await page.getByRole('button', { name: '回收站', exact: true }).click();
 await page.getByRole('heading', { name: '回收站' }).waitFor();
 const trashed = page.locator('.trash-list article').filter({ hasText: '设备故障' }).first();
@@ -168,6 +204,11 @@ await page.getByRole('button', { name: /搜索/ }).click();
 await page.getByRole('dialog', { name: '搜索工作空间' }).waitFor();
 await page.getByPlaceholder('搜索任务、项目、证据、实验或汇报……').fill('问题验证');
 await page.getByRole('dialog', { name: '搜索工作空间' }).getByText('问题验证检查清单').waitFor();
+await page.keyboard.press('Tab');
+await page.keyboard.press('Escape');
+await page.getByRole('dialog', { name: '搜索工作空间' }).waitFor({ state: 'detached' });
+await page.getByRole('button', { name: /搜索/ }).click();
+await page.getByPlaceholder('搜索任务、项目、证据、实验或汇报……').fill('问题验证');
 await page.getByRole('dialog', { name: '搜索工作空间' }).getByText('问题验证检查清单').click();
 if (!page.url().includes('#/knowledge/')) throw new Error(`Search result did not open an entity route: ${page.url()}`);
 const openedKnowledgeTitle = await page.getByRole('dialog').locator('input').first().inputValue();
@@ -183,6 +224,20 @@ await context.setOffline(false);
 const secondTab = await context.newPage();
 await secondTab.goto('http://127.0.0.1:4173', { waitUntil: 'domcontentloaded' });
 await secondTab.getByText('另一个标签页正在编辑。当前页实时同步但不会写入，避免覆盖。').waitFor();
+await secondTab.getByRole('button', { name: /设置/ }).click();
+await secondTab.getByRole('button', { name: '恢复示例数据' }).click();
+await secondTab.getByRole('alertdialog', { name: '确认恢复示例数据' }).getByRole('button', { name: '恢复并替换' }).click();
+await secondTab.getByText('当前标签页为只读，未覆盖工作区数据。').waitFor();
+const readonlyResetPreservedTask = await secondTab.evaluate(async () => new Promise((resolve, reject) => {
+  const request = indexedDB.open('enableos-workspace');
+  request.onerror = () => reject(request.error);
+  request.onsuccess = () => {
+    const get = request.result.transaction('tasks', 'readonly').objectStore('tasks').getAll();
+    get.onerror = () => reject(get.error);
+    get.onsuccess = () => resolve(get.result.some((item) => item.title.includes('设备故障')));
+  };
+}));
+if (!readonlyResetPreservedTask) throw new Error('Read-only tab reset overwrote the active workspace');
 await secondTab.close();
 
 const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'zh-CN' });
@@ -199,5 +254,5 @@ await mistakenFileEntry.getByRole('heading', { name: '从一个输入，推进�
 await mistakenFileEntry.close();
 
 if (errors.length) throw new Error(`Browser errors:\n${errors.join('\n')}`);
-process.stdout.write(JSON.stringify({ ok: true, desktop: 'docs/enableos-web-preview.png', settings: 'docs/enableos-settings.png', reportCenter: 'docs/enableos-report-center.png', taskFlow: 'docs/enableos-task-flow.png', taskEditor: 'docs/enableos-task-editor.png', experiments: 'docs/enableos-experiments.png', mobile: 'docs/enableos-web-mobile.png' }));
+process.stdout.write(JSON.stringify({ ok: true, desktop: 'docs/enableos-web-preview.png', settings: 'docs/enableos-settings.png', reportCenter: 'docs/enableos-report-center.png', taskFlow: 'docs/enableos-task-flow.png', taskEditor: 'docs/enableos-task-editor.png', confirmation: 'docs/enableos-confirmation.png', experiments: 'docs/enableos-experiments.png', mobile: 'docs/enableos-web-mobile.png' }));
 await browser.close();

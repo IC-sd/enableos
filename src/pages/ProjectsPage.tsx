@@ -5,6 +5,7 @@ import type { Project, ProjectStatus, Task } from '../../shared/models';
 import { EmptyState } from '../components/EmptyState';
 import { Modal } from '../components/Modal';
 import { useAppStore } from '../context/AppStore';
+import { useConfirm } from '../context/ConfirmationContext';
 import { desktop } from '../lib/bridge';
 import { activity, formatDate, projectProgress, randomUUID } from '../lib/utils';
 import { isActive, prependRevision, restoreEntityRevision } from '../lib/entity-history';
@@ -15,6 +16,7 @@ const statusText: Record<ProjectStatus, string> = { planning: '规划中', activ
 
 export function ProjectsPage({ initialSelectedId }: { initialSelectedId?: string }) {
   const { database, mutate, notify } = useAppStore();
+  const confirm = useConfirm();
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || null);
   const [createOpen, setCreateOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
@@ -71,15 +73,15 @@ export function ProjectsPage({ initialSelectedId }: { initialSelectedId?: string
     setTaskDraft(''); setTaskOpen(false); notify('任务已加入项目');
   };
 
-  const toggleTask = (task: Task) => {
+  const toggleTask = async (task: Task) => {
     const done = task.status !== 'done';
-    if (done && !window.confirm(`确认任务“${task.title}”已经完成吗？完成后仍可重新打开。`)) return;
+    if (done && !await confirm({ title: '确认完成任务', message: `“${task.title}”将标记为已完成，之后仍可重新打开。`, confirmLabel: '标记完成' })) return;
     mutate((current) => transitionTask(current, task.id, done ? 'done' : 'planned', done ? '完成项目任务' : '重新打开项目任务'));
     notify(done ? '已记录完成，可随时重新打开' : '已重新打开任务');
   };
 
-  const removeProject = () => {
-    if (!selected || !window.confirm(`将项目“${selected.title}”移入回收站吗？关联内容和归属会原样保留，恢复后继续可用。`)) return;
+  const removeProject = async () => {
+    if (!selected || !await confirm({ title: '移入回收站', message: `项目“${selected.title}”会移入回收站；关联内容和归属保持不变，恢复后可继续使用。`, confirmLabel: '移入回收站', tone: 'danger' })) return;
     const deletedAt = new Date().toISOString();
     mutate((current) => ({
       ...current,
@@ -120,7 +122,7 @@ export function ProjectsPage({ initialSelectedId }: { initialSelectedId?: string
         <section className="panel project-main-panel">
           <div className="panel-header"><div><p className="eyebrow">任务清单</p><h2>把目标拆成下一步</h2></div><button className="secondary-button" onClick={() => setTaskOpen(true)}><CirclePlus size={16} />添加任务</button></div>
           <div className="project-task-list">
-            {relatedTasks.length ? relatedTasks.map((task) => <article key={task.id} className={`project-task-row ${task.status === 'done' ? 'done' : ''}`}><button className="task-check" aria-label={task.status === 'done' ? `重新打开 ${task.title}` : `完成 ${task.title}`} title={task.status === 'done' ? '重新打开任务' : '标记完成'} onClick={() => toggleTask(task)}>{task.status === 'done' ? <Check size={14} /> : null}</button><div><strong>{task.title}</strong><small>{task.status === 'doing' ? '进行中' : task.status === 'done' ? '已完成 · 点击左侧重新打开' : '已计划 · 点击左侧完成'}</small></div>{task.dueDate ? <em>{formatDate(task.dueDate)}</em> : null}</article>) : <EmptyState icon={ListChecks} title="还没有项目任务" description="添加第一步行动，让项目真正开始移动。" action={<button className="primary-button" onClick={() => setTaskOpen(true)}><Plus size={16} />添加第一项任务</button>} />}
+            {relatedTasks.length ? relatedTasks.map((task) => <article key={task.id} className={`project-task-row ${task.status === 'done' ? 'done' : ''}`}><button className="task-check" aria-label={task.status === 'done' ? `重新打开 ${task.title}` : `完成 ${task.title}`} title={task.status === 'done' ? '重新打开任务' : '标记完成'} onClick={() => void toggleTask(task)}>{task.status === 'done' ? <Check size={14} /> : null}</button><div><strong>{task.title}</strong><small>{task.status === 'doing' ? '进行中' : task.status === 'done' ? '已完成 · 点击左侧重新打开' : '已计划 · 点击左侧完成'}</small></div>{task.dueDate ? <em>{formatDate(task.dueDate)}</em> : null}</article>) : <EmptyState icon={ListChecks} title="还没有项目任务" description="添加第一步行动，让项目真正开始移动。" action={<button className="primary-button" onClick={() => setTaskOpen(true)}><Plus size={16} />添加第一项任务</button>} />}
           </div>
           <div className="project-evidence-grid"><article><BookOpenText size={18} /><div><strong>{relatedKnowledge.length}</strong><span>证据与决定</span></div><p>{relatedKnowledge.filter((item) => item.verificationStatus === 'confirmed').length} 项已确认</p></article><article><FlaskConical size={18} /><div><strong>{relatedScenarios.length}</strong><span>实验与决策</span></div><p>{relatedScenarios.reduce((sum, item) => sum + item.runs.length, 0)} 次评测运行</p></article><article><FileChartColumn size={18} /><div><strong>{relatedReports.length}</strong><span>汇报版本</span></div><p>均可追溯到本项目</p></article></div>
         </section>
@@ -130,7 +132,7 @@ export function ProjectsPage({ initialSelectedId }: { initialSelectedId?: string
             <div className="boundary-block"><label>预期结果</label>{selected.deliverables.length ? <ul>{selected.deliverables.map((item) => <li key={item}>{item}</li>)}</ul> : <p>可从任务收件箱升级项目，自动带入建议结果。</p>}</div>
             <div className="boundary-block"><label>已知风险</label>{selected.risks.length ? <ul>{selected.risks.map((item) => <li key={item}>{item}</li>)}</ul> : <p>当前没有记录风险。</p>}</div>
             <HistoryPanel database={database} entityType="project" entityId={selected.id} onRestore={(revisionId) => { mutate((current) => restoreEntityRevision(current, revisionId)); notify('已恢复所选项目版本'); }} />
-            <button className="danger-text-button" onClick={removeProject}><Trash2 size={16} />移入回收站</button>
+            <button className="danger-text-button" onClick={() => void removeProject()}><Trash2 size={16} />移入回收站</button>
           </section>
         </aside>
       </div>

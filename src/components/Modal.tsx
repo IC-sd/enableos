@@ -7,20 +7,24 @@ interface ModalProps {
   title: string;
   description?: string;
   size?: 'small' | 'medium' | 'large';
+  role?: 'dialog' | 'alertdialog';
   onClose: () => void;
   children: ReactNode;
 }
 
-export function Modal({ open, title, description, size = 'medium', onClose, children }: ModalProps) {
+export function Modal({ open, title, description, size = 'medium', role = 'dialog', onClose, children }: ModalProps) {
   const dialogRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
     const frame = window.requestAnimationFrame(() => {
-      const first = dialogRef.current?.querySelector<HTMLElement>('input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])');
+      if (dialogRef.current?.contains(document.activeElement)) return;
+      const first = dialogRef.current?.querySelector<HTMLElement>('[autofocus], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])');
       (first ?? dialogRef.current)?.focus();
     });
     const listener = (event: KeyboardEvent) => {
+      const dialogs = [...document.querySelectorAll<HTMLElement>('[data-modal-root]')];
+      if (dialogs.at(-1) !== dialogRef.current) return;
       if (event.key === 'Escape') onClose();
       if (event.key !== 'Tab' || !dialogRef.current) return;
       const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')];
@@ -36,7 +40,7 @@ export function Modal({ open, title, description, size = 'medium', onClose, chil
   if (!open) return null;
   return (
     <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section ref={dialogRef} tabIndex={-1} className={`modal modal-${size}`} role="dialog" aria-modal="true" aria-label={title}>
+      <section ref={dialogRef} tabIndex={-1} className={`modal modal-${size}`} role={role} aria-modal="true" aria-label={title} data-modal-root>
         <header className="modal-header">
           <div>
             <h2>{title}</h2>

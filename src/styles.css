@@ -122,11 +122,13 @@ h3 { margin-bottom: 4px; font-size: 14px; line-height: 1.4; }
 .page-header > div:first-child, .page-hero > div:first-child { max-width: 760px; }
 .page-header p:last-child, .page-hero p:last-child { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .header-actions, .inline-actions { display: flex; gap: 9px; align-items: center; }
-.primary-button, .secondary-button, .text-button, .danger-text-button { min-height: 38px; padding: 0 14px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.primary-button, .secondary-button, .danger-button, .text-button, .danger-text-button { min-height: 38px; padding: 0 14px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .primary-button { border: 1px solid var(--primary); color: white; background: var(--primary); box-shadow: 0 6px 16px rgba(22,124,103,.16); }
 .primary-button:hover { border-color: var(--primary-hover); background: var(--primary-hover); }
 .secondary-button { border: 1px solid var(--border); color: var(--text); background: var(--surface); }
 .secondary-button:hover { border-color: var(--border-strong); background: var(--surface-subtle); }
+.danger-button { border: 1px solid var(--danger); color: white; background: var(--danger); }
+.danger-button:hover { border-color: color-mix(in srgb, var(--danger) 78%, black); background: color-mix(in srgb, var(--danger) 78%, black); }
 .text-button, .danger-text-button { min-height: 32px; padding: 0 4px; border: 0; background: transparent; color: var(--primary); }
 .text-button:hover { color: var(--primary-hover); }
 .danger-text-button { color: var(--danger); }
@@ -225,6 +227,9 @@ h3 { margin-bottom: 4px; font-size: 14px; line-height: 1.4; }
 .modal-body { min-height: 0; overflow: auto; padding: 24px; }
 .modal-actions { margin-top: 24px; display: flex; justify-content: flex-end; align-items: center; gap: 9px; }
 .modal-actions.split { justify-content: space-between; }.modal-actions > div { display: flex; gap: 8px; }
+.confirmation-dialog { min-height: 92px; display: flex; flex-direction: column; justify-content: space-between; }
+.confirmation-note { padding: 13px 14px; display: flex; align-items: flex-start; gap: 10px; color: var(--muted); background: var(--surface-subtle); font-size: 11px; line-height: 1.65; }
+.confirmation-note svg { flex: 0 0 auto; margin-top: 1px; color: var(--primary); }.confirmation-danger .confirmation-note svg { color: var(--danger); }
 .capture-source-row { margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
 .capture-source-row label { margin-right: 5px; color: var(--muted); font-size: 10px; font-weight: 700; }
 .capture-source-row button { min-height: 28px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); font-size: 9px; }
@@ -437,7 +442,7 @@ body {
 
 h1, h2, h3, .brand strong { font-family: var(--display-font); font-weight: 700; }
 button, input, textarea, select { border-radius: 2px; }
-.primary-button, .secondary-button, .text-button, .danger-text-button { border-radius: 2px; }
+.primary-button, .secondary-button, .danger-button, .text-button, .danger-text-button { border-radius: 2px; }
 .primary-button { box-shadow: none; background: var(--primary); }
 .primary-button:hover { transform: translateY(-1px); }
 .secondary-button { background: transparent; border-color: var(--border-strong); }

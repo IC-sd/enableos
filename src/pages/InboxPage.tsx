@@ -5,6 +5,7 @@ import type { NavigateHandler } from '../components/Sidebar';
 import { EmptyState } from '../components/EmptyState';
 import { Modal } from '../components/Modal';
 import { useAppStore } from '../context/AppStore';
+import { useConfirm } from '../context/ConfirmationContext';
 import { activity, formatDate, randomUUID } from '../lib/utils';
 import { isActive, prependRevision, restoreEntityRevision } from '../lib/entity-history';
 import { HistoryPanel } from '../components/HistoryPanel';
@@ -25,6 +26,7 @@ function editableCopy(task: Task): Task {
 
 export function InboxPage({ onNavigate, initialSelectedId }: { onNavigate: NavigateHandler; initialSelectedId?: string }) {
   const { database, mutate, notify } = useAppStore();
+  const confirm = useConfirm();
   const [filter, setFilter] = useState<TaskStatus | 'open' | 'all'>('open');
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || null);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -105,8 +107,8 @@ export function InboxPage({ onNavigate, initialSelectedId }: { onNavigate: Navig
     onNavigate('projects', project.id);
   };
 
-  const removeTask = (task: Task) => {
-    if (!window.confirm(`将任务“${task.title}”移入回收站吗？关联资料仍会保留，可随时恢复。`)) return;
+  const removeTask = async (task: Task) => {
+    if (!await confirm({ title: '移入回收站', message: `任务“${task.title}”会移入回收站；关联资料仍会保留，可随时恢复。`, confirmLabel: '移入回收站', tone: 'danger' })) return;
     const deletedAt = new Date().toISOString();
     mutate((current) => ({
       ...current,
@@ -116,6 +118,13 @@ export function InboxPage({ onNavigate, initialSelectedId }: { onNavigate: Navig
     }));
     closeTask();
     notify('任务已移入回收站，关联资产仍保留', 'info');
+  };
+
+  const completeTask = async (task: Task) => {
+    if (!await confirm({ title: '确认完成任务', message: `“${task.title}”将标记为已完成并进入汇报记录，之后仍可重新打开。`, confirmLabel: '标记完成' })) return;
+    updateTask(task.id, { status: 'done' }, '完成任务');
+    notify('已记录完成，可随时重新打开');
+    closeTask();
   };
 
   const updateQuestion = (index: number, field: 'question' | 'answer', value: string) => {
@@ -165,7 +174,7 @@ export function InboxPage({ onNavigate, initialSelectedId }: { onNavigate: Navig
         <div className="detail-columns"><label className="field"><span>预期结果（每行一项）</span><textarea rows={5} value={editTask.deliverables.join('\n')} onChange={(event) => setEditTask({ ...editTask, deliverables: event.target.value.split('\n') })} /></label><label className="field"><span>完成标准（每行一项）</span><textarea rows={5} value={editTask.acceptanceCriteria.join('\n')} onChange={(event) => setEditTask({ ...editTask, acceptanceCriteria: event.target.value.split('\n') })} placeholder="例如：目标使用者确认可用；10条测试全部通过" /></label></div>
 
         <HistoryPanel database={database} entityType="task" entityId={selected.id} onRestore={(revisionId) => { mutate((current) => restoreEntityRevision(current, revisionId)); closeTask(); notify('已恢复所选任务版本'); }} />
-        <footer className="modal-actions split"><button className="danger-text-button" onClick={() => removeTask(selected)}><Trash2 size={16} />移入回收站</button><div>{selected.status === 'done' ? <button className="secondary-button" onClick={() => { updateTask(selected.id, { status: 'planned', completedAt: '' }, '重新打开任务'); notify('已撤销完成，任务回到计划中'); closeTask(); }}><RotateCcw size={16} />重新打开</button> : <button className="secondary-button" onClick={() => { const next = selected.status === 'doing' ? 'planned' : 'doing'; updateTask(selected.id, { status: next }, next === 'doing' ? '开始处理任务' : '暂停任务'); notify(next === 'doing' ? '已开始处理' : '已移回计划'); closeTask(); }}><Play size={16} />{selected.status === 'doing' ? '移回计划' : '开始处理'}</button>}{!selected.projectId ? <button className="secondary-button" onClick={() => convertToProject(editTask)}><BriefcaseBusiness size={16} />新建项目</button> : null}{selected.status !== 'done' ? <button className="secondary-button" onClick={() => { if (!window.confirm('确认这项工作已经完成并可以进入汇报记录吗？')) return; updateTask(selected.id, { status: 'done' }, '完成任务'); notify('已记录完成，可随时重新打开'); closeTask(); }}><Check size={16} />标记完成</button> : null}<button className="primary-button" onClick={saveTask}><Save size={16} />保存修改</button></div></footer>
+        <footer className="modal-actions split"><button className="danger-text-button" onClick={() => void removeTask(selected)}><Trash2 size={16} />移入回收站</button><div>{selected.status === 'done' ? <button className="secondary-button" onClick={() => { updateTask(selected.id, { status: 'planned', completedAt: '' }, '重新打开任务'); notify('已撤销完成，任务回到计划中'); closeTask(); }}><RotateCcw size={16} />重新打开</button> : <button className="secondary-button" onClick={() => { const next = selected.status === 'doing' ? 'planned' : 'doing'; updateTask(selected.id, { status: next }, next === 'doing' ? '开始处理任务' : '暂停任务'); notify(next === 'doing' ? '已开始处理' : '已移回计划'); closeTask(); }}><Play size={16} />{selected.status === 'doing' ? '移回计划' : '开始处理'}</button>}{!selected.projectId ? <button className="secondary-button" onClick={() => convertToProject(editTask)}><BriefcaseBusiness size={16} />新建项目</button> : null}{selected.status !== 'done' ? <button className="secondary-button" onClick={() => void completeTask(selected)}><Check size={16} />标记完成</button> : null}<button className="primary-button" onClick={saveTask}><Save size={16} />保存修改</button></div></footer>
       </div> : null}
     </Modal>
   </div>;

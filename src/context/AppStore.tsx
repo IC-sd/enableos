@@ -13,7 +13,7 @@ interface AppStoreValue {
   loading: boolean;
   loadError: string;
   mutate: (recipe: (database: AppDatabase) => AppDatabase) => void;
-  replaceDatabase: (database: AppDatabase) => void;
+  replaceDatabase: (database: AppDatabase) => boolean;
   addActivity: (activity: Activity) => void;
   toast: ToastState | null;
   notify: (message: string, kind?: ToastState['kind']) => void;
@@ -128,11 +128,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!database) return;
     const mode = database.settings.theme;
-    const effective = mode === 'system'
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : mode;
-    document.documentElement.dataset.theme = effective;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const applyTheme = () => { document.documentElement.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode; };
+    applyTheme();
     document.documentElement.dataset.compact = String(database.settings.compactMode);
+    if (mode === 'system') media.addEventListener('change', applyTheme);
+    return () => media.removeEventListener('change', applyTheme);
   }, [database?.settings.theme, database?.settings.compactMode]);
 
   const persist = useCallback((next: AppDatabase) => {
@@ -186,7 +187,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const replaceDatabase = useCallback((next: AppDatabase) => {
     if (readOnlyRef.current) {
       setToast({ message: '当前标签页为只读，未覆盖工作区数据。', kind: 'info' });
-      return;
+      return false;
     }
     loadedRef.current = true;
     if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
@@ -194,6 +195,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     pendingSaveRef.current = null;
     setDatabase(next);
     persist(next);
+    return true;
   }, [persist]);
 
   const addActivity = useCallback((item: Activity) => {

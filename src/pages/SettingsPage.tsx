@@ -2,6 +2,7 @@ import { Bot, CheckCircle2, CircleGauge, ClipboardCheck, DatabaseBackup, Downloa
 import { useEffect, useState } from 'react';
 import type { AppDatabase, ThemeMode } from '../../shared/models';
 import { useAppStore } from '../context/AppStore';
+import { useConfirm } from '../context/ConfirmationContext';
 import { Modal } from '../components/Modal';
 import { desktop } from '../lib/bridge';
 import { buildAuditExport } from '../lib/audit';
@@ -11,6 +12,7 @@ import { inspectWorkspace, repairWorkspace } from '../lib/workspace-health';
 
 export function SettingsPage() {
   const { database, mutate, replaceDatabase, notify, storagePersistent, requestPersistentStorage, isReadOnly, lastSavedAt } = useAppStore();
+  const confirm = useConfirm();
   const [apiKey, setApiKey] = useState('');
   const [testing, setTesting] = useState(false);
   const [diagnostic, setDiagnostic] = useState('尚未测试');
@@ -90,14 +92,25 @@ export function SettingsPage() {
 
   const exportBackup = () => { setBackupMode('export'); setBackupPassword(''); setBackupConfirmation(''); };
 
+  const confirmBackupImport = async (candidate: AppDatabase) => {
+    const accepted = await confirm({
+      title: '确认导入备份',
+      message: `即将导入 ${candidate.projects.length} 个项目、${candidate.tasks.length} 个任务、${candidate.knowledge.length} 份资料、${candidate.scenarios.length} 个实验和 ${candidate.reports.length} 份汇报。当前工作区会被完整替换，且无法通过撤销恢复。`,
+      confirmLabel: '导入并替换',
+      tone: 'danger',
+    });
+    if (!accepted) return false;
+    if (!replaceDatabase(candidate)) return false;
+    notify('备份已导入');
+    return true;
+  };
+
   const importBackup = async () => {
-    if (!window.confirm('导入会替换当前工作台数据，建议先导出备份。继续吗？')) return;
     try {
       const selected = await desktop.files.selectBackup();
       if (selected.canceled) return;
       if (selected.encrypted) { setBackupPayload(selected.payload); setBackupMode('import'); return; }
-      replaceDatabase(await desktop.files.decodeBackup(selected.payload));
-      notify('备份已导入');
+      await confirmBackupImport(await desktop.files.decodeBackup(selected.payload));
     } catch (error) { notify(error instanceof Error ? error.message : '导入失败', 'error'); }
   };
 
@@ -116,8 +129,10 @@ export function SettingsPage() {
           notify(`加密备份已保存到 ${result.path}`);
         }
       } else {
-        replaceDatabase(await desktop.files.decodeBackup(backupPayload, backupPassword));
-        notify('加密备份已导入');
+        const candidate = await desktop.files.decodeBackup(backupPayload, backupPassword);
+        closeBackupDialog();
+        await confirmBackupImport(candidate);
+        return;
       }
       closeBackupDialog();
     } catch (error) {
@@ -127,8 +142,15 @@ export function SettingsPage() {
   };
 
   const resetDemo = async () => {
-    if (!window.confirm('恢复示例会替换当前全部数据。确定继续吗？')) return;
-    const restored = await desktop.data.resetDemo(); replaceDatabase(restored); notify('已恢复示例工作空间', 'info');
+    const accepted = await confirm({
+      title: '确认恢复示例数据',
+      message: '当前项目、任务、资料、实验、汇报和历史记录都会被示例工作区替换。此操作无法撤销，建议先导出加密备份。',
+      confirmLabel: '恢复并替换',
+      tone: 'danger',
+    });
+    if (!accepted) return;
+    const restored = await desktop.data.resetDemo();
+    if (replaceDatabase(restored)) notify('已恢复示例工作空间', 'info');
   };
 
   return <div className="page settings-page">
@@ -144,7 +166,7 @@ export function SettingsPage() {
 
       <section className="panel settings-section"><div className="settings-section-head"><div className="settings-icon blue"><CircleGauge size={19} /></div><div><h2>工作区健康检查</h2><p>检查失效关联、重复标识、异常评分、日期范围和配置缺口；只自动修复不会丢数据的问题。</p></div><div className={`readiness-badge ${healthIssues.length === 0 ? 'ready' : ''}`}>{healthIssues.length ? `${healthIssues.length} 项` : '健康'}</div></div>{healthIssues.length ? <div className="health-list">{healthIssues.map((issue) => <article className={issue.severity} key={issue.code}><div><strong>{issue.title}</strong><span>{issue.count} 项 · {issue.repairable ? '可安全修复' : '需人工确认'}</span></div><p>{issue.detail}</p></article>)}</div> : <div className="health-empty"><ShieldCheck size={18} /><span>未发现数据一致性或关键配置问题。</span></div>}{healthIssues.some((issue) => issue.repairable) ? <div className="data-actions"><button className="secondary-button" onClick={repairHealthIssues}><Wrench size={16} />修复安全项</button></div> : null}</section>
 
-      <section className="panel settings-section compact-settings"><div className="settings-section-head"><div className="settings-icon coral"><Save size={19} /></div><div><h2>外观与体验</h2><p>设置会自动保存。</p></div></div><div className="preference-row"><span>主题</span><div className="segmented-control">{([['light', '浅色'], ['dark', '深色'], ['system', '跟随系统']] as const).map(([key, label]) => <button className={database.settings.theme === key ? 'active' : ''} key={key} onClick={() => updateSettings({ theme: key as ThemeMode })}>{label}</button>)}</div></div><div className="preference-row"><span>紧凑显示</span><button className={`toggle ${database.settings.compactMode ? 'on' : ''}`} onClick={() => updateSettings({ compactMode: !database.settings.compactMode })}><i /></button></div><div className="version-note">EnableOS {appInfo.version || '3.4.0'} · {appInfo.platform || 'Web'}</div></section>
+      <section className="panel settings-section compact-settings"><div className="settings-section-head"><div className="settings-icon coral"><Save size={19} /></div><div><h2>外观与体验</h2><p>设置会自动保存。</p></div></div><div className="preference-row"><span>主题</span><div className="segmented-control">{([['light', '浅色'], ['dark', '深色'], ['system', '跟随系统']] as const).map(([key, label]) => <button className={database.settings.theme === key ? 'active' : ''} key={key} onClick={() => updateSettings({ theme: key as ThemeMode })}>{label}</button>)}</div></div><div className="preference-row"><span>紧凑显示</span><button className={`toggle ${database.settings.compactMode ? 'on' : ''}`} onClick={() => updateSettings({ compactMode: !database.settings.compactMode })}><i /></button></div><div className="version-note">EnableOS {appInfo.version || '3.5.0'} · {appInfo.platform || 'Web'}</div></section>
     </div>
     <Modal open={Boolean(backupMode)} onClose={closeBackupDialog} title={backupMode === 'export' ? '导出加密备份' : '解锁加密备份'} description={backupMode === 'export' ? '密码只在当前操作中使用；忘记密码将无法恢复。' : '请输入创建此备份时使用的密码。'}>
       <div className="backup-password-dialog">

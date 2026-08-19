@@ -4,6 +4,7 @@ import type { Confidentiality, EvidenceKind, ImportedDocument, KnowledgeItem, Kn
 import { EmptyState } from '../components/EmptyState';
 import { Modal } from '../components/Modal';
 import { useAppStore } from '../context/AppStore';
+import { useConfirm } from '../context/ConfirmationContext';
 import { desktop } from '../lib/bridge';
 import { evidenceContext, localEvidenceAnswer, retrieveEvidence, validateEvidenceAnswer, type EvidenceMatch } from '../lib/retrieval';
 import { hybridRetrieveEvidence } from '../lib/semantic-retrieval';
@@ -17,6 +18,7 @@ const evidenceNames: Record<EvidenceKind, string> = { fact: '事实', reference:
 
 export function KnowledgePage({ initialSelectedId }: { initialSelectedId?: string }) {
   const { database, mutate, notify } = useAppStore();
+  const confirm = useConfirm();
   const [query, setQuery] = useState('');
   const [type, setType] = useState<KnowledgeType | 'all'>('all');
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || null);
@@ -119,8 +121,8 @@ export function KnowledgePage({ initialSelectedId }: { initialSelectedId?: strin
     finally { setAsking(false); }
   };
 
-  const removeItem = (item: KnowledgeItem) => {
-    if (!window.confirm(`将资料“${item.title}”移入回收站吗？`)) return;
+  const removeItem = async (item: KnowledgeItem) => {
+    if (!await confirm({ title: '移入回收站', message: `资料“${item.title}”会移入回收站，之后可以恢复。`, confirmLabel: '移入回收站', tone: 'danger' })) return;
     const deletedAt = new Date().toISOString();
     mutate((current) => ({ ...current, knowledge: current.knowledge.map((entry) => entry.id === item.id ? { ...entry, deletedAt, updatedAt: deletedAt } : entry), revisions: prependRevision(current, 'knowledge', item, 'delete'), activities: [activity('knowledge', '资料移入回收站', item.title, item.id), ...current.activities] }));
     setSelectedId(null); notify('资料已移入回收站', 'info');
@@ -190,7 +192,7 @@ export function KnowledgePage({ initialSelectedId }: { initialSelectedId?: strin
         </div>
         {selected.sourceFingerprint ? <div className="source-provenance"><FileCheck2 size={18} /><div><strong>原始文件可核验</strong><span>{selected.sourceName} · {selected.sourceSize ? `${(selected.sourceSize / 1024).toFixed(1)} KB` : '大小未知'}{selected.sourceModifiedAt ? ` · 文件日期 ${formatFullDate(selected.sourceModifiedAt)}` : ''}</span><code>SHA-256 {selected.sourceFingerprint.slice(0, 16)}…</code></div><button className="secondary-button" onClick={async () => { const result = await desktop.files.verifySourceFile(selected.sourceFingerprint); if (!result.canceled) notify(result.valid ? `原始文件一致：${result.fileName}` : `文件不一致：${result.fileName}`, result.valid ? 'success' : 'error'); }}><ShieldCheck size={14} />重新选择并核验</button></div> : null}
         <HistoryPanel database={database} entityType="knowledge" entityId={selected.id} onRestore={(revisionId) => { mutate((current) => restoreEntityRevision(current, revisionId)); setSelectedId(null); setEditDraft(null); notify('已恢复所选资料版本'); }} />
-        <div className="modal-actions split"><button className="danger-text-button" onClick={() => removeItem(selected)}><Trash2 size={16} />移入回收站</button><div><button className="secondary-button" onClick={() => { setSelectedId(null); setEditDraft(null); }}>取消</button><button className="primary-button" disabled={!editDraft.title.trim() || !editDraft.content.trim()} onClick={() => void saveSelected()}>保存修改</button></div></div>
+        <div className="modal-actions split"><button className="danger-text-button" onClick={() => void removeItem(selected)}><Trash2 size={16} />移入回收站</button><div><button className="secondary-button" onClick={() => { setSelectedId(null); setEditDraft(null); }}>取消</button><button className="primary-button" disabled={!editDraft.title.trim() || !editDraft.content.trim()} onClick={() => void saveSelected()}>保存修改</button></div></div>
       </div> : null}
     </Modal>
     <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="新增资料" description="记录事实、术语、方法、会议结论或重要背景。">

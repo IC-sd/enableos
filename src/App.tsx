@@ -86,14 +86,14 @@ export function App() {
   return (
     <div className="app-root">
       <TitleBar onSearch={() => setSearchOpen(true)} />
-      {isReadOnly ? <div className="readonly-banner"><LockKeyhole size={15} /><span>另一个标签页正在编辑。当前页实时同步但不会写入，避免覆盖。</span><button onClick={() => void reloadFromDisk()}><RefreshCw size={13} />刷新</button><button onClick={takeControl}>在此页编辑</button></div> : null}
+      {isReadOnly ? <div className="readonly-banner" role="status" aria-live="polite"><LockKeyhole size={15} /><span>另一个标签页正在编辑。当前页实时同步但不会写入，避免覆盖。</span><button onClick={() => void reloadFromDisk()}><RefreshCw size={13} />刷新</button><button onClick={takeControl}>在此页编辑</button></div> : null}
       <div className="app-body">
         <Sidebar database={database} view={view} onNavigate={navigate} onQuickCapture={() => setCaptureOpen(true)} />
         <main className="content-shell"><Suspense fallback={<div className="page-loading"><LoaderCircle className="spin" size={20} /><span>正在打开工作视图</span></div>}>{page}</Suspense></main>
       </div>
       <QuickCapture open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={(taskId) => navigate('dashboard', taskId)} />
       <GlobalSearch open={searchOpen} database={database} onClose={() => setSearchOpen(false)} onNavigate={navigate} />
-      {toast ? <div className={`toast toast-${toast.kind}`}><CheckCircle2 size={17} />{toast.message}</div> : null}
+      {toast ? <div className={`toast toast-${toast.kind}`} role={toast.kind === 'error' ? 'alert' : 'status'} aria-live={toast.kind === 'error' ? 'assertive' : 'polite'}><CheckCircle2 size={17} />{toast.message}</div> : null}
     </div>
   );
 }

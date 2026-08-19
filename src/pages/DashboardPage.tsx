@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { TaskStatus } from '../../shared/models';
 import type { NavigateHandler } from '../components/Sidebar';
 import { useAppStore } from '../context/AppStore';
+import { useConfirm } from '../context/ConfirmationContext';
 import { activity, formatDate, formatFullDate } from '../lib/utils';
 import { isActive, prependRevision } from '../lib/entity-history';
 import { sortTasksForAction, transitionTask } from '../lib/task-actions';
@@ -31,6 +32,7 @@ const statusText: Record<TaskStatus, string> = {
 
 export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }: { onNavigate: NavigateHandler; onQuickCapture: () => void; initialSelectedId?: string }) {
   const { database, mutate, notify } = useAppStore();
+  const confirm = useConfirm();
   const orderedTasks = useMemo(() => {
     if (!database) return [];
     return sortTasksForAction(database.tasks.filter(isActive));
@@ -68,6 +70,12 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
     if (!selectedTask || selectedTask.status === status) return;
     mutate((current) => transitionTask(current, selectedTask.id, status, status === 'done' ? '完成任务' : '推进任务'));
     notify(status === 'done' ? '这项任务已完成并留痕' : '已切换到推进状态');
+  };
+
+  const completeSelectedTask = async () => {
+    if (!selectedTask) return;
+    const accepted = await confirm({ title: '确认完成任务', message: `“${selectedTask.title}”将标记为已完成并进入汇报记录，之后仍可重新打开。`, confirmLabel: '完成并留痕' });
+    if (accepted) updateStatus('done');
   };
 
   const toggleStep = (index: number) => {
@@ -136,7 +144,7 @@ export function DashboardPage({ onNavigate, onQuickCapture, initialSelectedId }:
                 <p>{selectedTask.summary || '这项任务还没有形成摘要，原始输入仍完整保留在下方。'}</p>
                 <div className="canvas-actions">
                   {selectedTask.status !== 'doing' && selectedTask.status !== 'done' ? <button className="primary-button" onClick={() => updateStatus('doing')}><Play size={15} />开始推进</button> : null}
-                  {selectedTask.status !== 'done' ? <button className="secondary-button" onClick={() => { if (window.confirm('确认这项工作已经完成并可以进入汇报记录吗？')) updateStatus('done'); }}><Check size={15} />完成并留痕</button> : <><span className="completion-seal"><CheckCircle2 size={16} />已形成完成记录</span><button className="secondary-button" onClick={() => updateStatus('planned')}><RotateCcw size={15} />重新打开</button></>}
+                  {selectedTask.status !== 'done' ? <button className="secondary-button" onClick={() => void completeSelectedTask()}><Check size={15} />完成并留痕</button> : <><span className="completion-seal"><CheckCircle2 size={16} />已形成完成记录</span><button className="secondary-button" onClick={() => updateStatus('planned')}><RotateCcw size={15} />重新打开</button></>}
                   <button className="text-button" onClick={() => onNavigate('inbox', selectedTask.id)}>编辑任务内容 <ArrowRight size={14} /></button>
                 </div>
                 <div className="workline-summary" aria-label="当前任务进度摘要">
